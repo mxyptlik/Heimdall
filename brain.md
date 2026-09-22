@@ -13,11 +13,11 @@ The latest explicit user decision wins over an older recommendation. Do not sile
 
 ## Current checkpoint
 
-- Phase: T019 complete (M1 deterministic core proven); strict-pin fix included.
-- Heimdall application code: keyless deterministic route end to end (T001–T006, T008–T019). No persistence, transport, SDK, or connector yet.
-- Mandatory implementation work: T001–T006, T008–T019 DONE; T007, T020+ TODO. Optional later work: T054 and T055, both TODO and disabled by default.
-- Next READY tasks: T007 needs T002+T005+T006 — READY. T020 needs T003+T004+T006+T012 — READY (PostgreSQL 16 service running; psql at `C:\Program Files\PostgreSQL\16\bin\`; auth setup is T020's first step). T021 needs T020+T003 — blocked on T020. T024 needs T021+T005+T018 — blocked on T021. T026 needs T025+T024+T013 — blocked on T025/T024. Dependency-ready now: T007, T020.
-- Active implementation owner/task: none (T019 closed 2026-09-22).
+- Phase: T020 complete; durable schema baseline proven against real PostgreSQL.
+- Heimdall application code: keyless route (T001–T019) + PostgreSQL platform (T020). No transport, SDK, or connector yet.
+- Mandatory implementation work: T001–T006, T008–T020 DONE; T007, T021+ TODO. Optional later work: T054 and T055, both TODO and disabled by default.
+- Next READY tasks: T007 needs T002+T005+T006 — READY. T021 needs T020+T003 — READY now (T020 DONE). T022 needs T020+T004 — READY now. T023 needs T020+T012+T006 — READY now. T024 needs T021+T005+T018 — blocked on T021. Dependency-ready now: T007, T021, T022, T023.
+- Active implementation owner/task: none (T020 closed 2026-09-22).
 - T020 environment note (2026-09-22): PostgreSQL 16 service `postgresql-x64-16` is RUNNING; `psql.exe` at `C:\Program Files\PostgreSQL\16\bin\` (not on PATH). Superuser auth for a test database is T020's first step. T020 stays READY.
 - Existing upstream reference: `deepseek-harness/`, initially pinned to `ddefc45`; verify current HEAD and working tree before connector work.
 - Open setup blockers: none for keyless scaffolding. Paid evaluation, exact candidate choice, release license and credentials are handled by their explicit future tasks.
@@ -215,6 +215,22 @@ Limitations / untested paths:
 - Scope preserved: routing service wrapping (T027), persistence (T020+), transport/SDK/connector.
 - Limitations / untested paths: no HTTP transport test (T029+); Windows host only.
 
+### V-20260922-13 — T020 PostgreSQL schema and migration harness
+
+- Task(s): T020.
+- Source revision / working-tree state: Heimdall commit `a9b11fe` (on top of `62c6dda`); `deepseek-harness/` at `ddefc45`, clean, untouched.
+- Environment: disposable PostgreSQL 16.11 cluster via local `initdb` in approved temp (`$TEMP\opencode\heimdall-pgtest`), port 5433, trust auth, database `heimdall_test`. The pre-existing `postgresql-x64-16` service was left untouched. CI extended with a postgres:16 service and `TEST_DATABASE_URL`.
+- Commands and working directory (`C:\Users\User\Desktop\Heimdall`, via `pnpm.cmd`, gateway tests with `TEST_DATABASE_URL` set):
+  - `pnpm.cmd test` (workspace) — exit 0; 23 files, 208 tests (8 real-PostgreSQL migration tests, rest pre-existing).
+  - `pnpm.cmd typecheck` (root), gateway `typecheck` — exit 0.
+  - `pnpm.cmd lint`, `pnpm.cmd boundaries` (31 source files, incl. new domain-storage rule) — exit 0.
+  - Secret sweep across platform code and migrations — no matches (credential refs store env-var names only).
+- Artifact paths: `apps/gateway/migrations/{0001_init,0002_tenant_history}.sql`; `apps/gateway/src/platform/{db,migrate}.ts`; `apps/gateway/test/postgres-migrations.test.ts`; CI postgres service.
+- Fixes during verification: header prose tripped the forward-only static check — the check now strips comment lines (statements only, which is also the more correct rule); `beforeAll` asserted first-run delta — now asserts end-state versions (rerun-safe); generation-test timeout already raised in V-20260922-10 held.
+- Engineering choices (within accepted design, no product change): isolated disposable cluster instead of touching the existing service; advisory-lock serialized forward-only migrations with no down path (rollback = compatible app rollback or backup restore, enforced by static test); least-privilege `heimdall_app` NOLOGIN role with append-only grants (no DELETE anywhere); pg tests skip without `TEST_DATABASE_URL` but run enforced in CI; domain-storage boundary rule added to the checker with a proven negative test.
+- Scope preserved: module storage adapters (T021–T023), admin/secret behavior (T022), operations config (T049).
+- Limitations / untested paths: backup/restore rehearsal deferred to T049 drills; production credential provisioning deferred to T022; no HTTP transport test (T029+); Windows host only.
+
 ### V-20260922-08 — T013 continuity reducer + T014 tool selection
 
 - Task(s): T013, T014 (parallel work packages, distinct file ownership).
@@ -276,6 +292,19 @@ Verification record IDs: V-20260922-02
 Remaining limitations: no runtime behavior yet; CI file unexecuted remotely; Linux host check deferred to T049
 Decision changes: routine engineering choices only (TS 5.9.3 pin; prettier lint scoped to owned trees) — no product decision changed
 Next READY tasks: T002
+```
+
+```text
+Task ID / title: T020 — PostgreSQL schema and migration harness
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: T003 DONE, T004 DONE, T006 DONE, T012 DONE
+Files / commit: commit a9b11fe (2 migrations + platform db/migrate + pg tests + boundary rule + CI postgres service)
+Behavior delivered: 5 owner-labelled schemas (15+ tables with FKs, unique idempotency keys, partial unique active snapshot, check constraints, indexes); advisory-locked forward-only runner with migration tracking; pg pool/transaction/readiness bootstrap; least-privilege append-only role; 8 behavior tests against real PG 16 (fresh + upgrade + idempotent + concurrent + chain + unique + FK + rollback + forward-only + grants)
+Verification record IDs: V-20260922-13
+Remaining limitations: backup/restore rehearsal in T049; credential provisioning in T022
+Decision changes: routine engineering choices only (listed in V-20260922-13) — no product decision changed
+Next READY tasks: T007, T021, T022, T023
 ```
 
 ```text

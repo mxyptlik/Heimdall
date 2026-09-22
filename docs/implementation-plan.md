@@ -202,7 +202,7 @@ Milestones: M0 contracts/fixtures and DSH feasibility; M1 keyless deterministic 
 **Acceptance/evidence:** All fixtures explain chosen and rejected candidates; tests detect unauthorized selection and missing costs. This is M1's deterministic core proof without database or paid calls.
 
 ### T020 — PostgreSQL schema and migration harness
-- [ ] Status: TODO
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `a9b11fe`)
 **Depends on:** T003, T004, T006, T012.
 **Owns:** owner-labelled migrations, database adapter bootstrap, test database setup.
 **Work:** Implement module schemas and indexes for tenant/profile/policy revisions, decisions, claims/attempts/reservations, and outcomes. Define transaction boundaries, constraints, migration ordering, least-privilege roles and unique idempotency keys. No cross-module table access from domain code.
