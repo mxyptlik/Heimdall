@@ -13,11 +13,11 @@ The latest explicit user decision wins over an older recommendation. Do not sile
 
 ## Current checkpoint
 
-- Phase: T005 complete; native request/result schemas and canonical hashing committed.
-- Heimdall application code: workspace (T001) + contracts primitives/generation (T002) + catalog/access domain (T003/T004) + request/result/canonical (T005). No routing/selection/invocation logic yet.
-- Mandatory implementation work: T001–T005 DONE; T006–T053 TODO. Optional later work: T054 and T055, both TODO and disabled by default.
-- Next READY tasks: T006 needs T002+T005 — READY now. T008 needs T002+T005 — READY now. T009 needs T002 — READY (independent manifest work). T010 needs T003+T004+T005 — READY now. T007 needs T002+T005+T006 — blocked on T006. Dependency-ready now: T006, T008, T009, T010.
-- Active implementation owner/task: none (T005 closed 2026-09-22).
+- Phase: T006+T010 complete; stream interfaces, exact decimals, and eligibility committed.
+- Heimdall application code: workspace through request schemas (T001–T005) + stream/decimal contracts and eligibility engine (T006/T010). No routing/ranking/invocation logic yet.
+- Mandatory implementation work: T001–T006, T010 DONE; all others TODO. Optional later work: T054 and T055, both TODO and disabled by default.
+- Next READY tasks: T007 needs T002+T005+T006 — READY now (T006 DONE). T008 needs T002+T005 — READY. T009 needs T002 — READY. T011 needs T003+T004+T006 — READY now. T014 needs T004+T005+T008 — blocked on T008. T015 needs T010+T011+T013+T014 — blocked on T011/T013/T014. T017 needs T006 — READY now. Dependency-ready now: T007, T008, T009, T011, T013 (needs T004+T005+T008 — blocked on T008), T017.
+- Active implementation owner/task: none (T006+T010 closed 2026-09-22).
 - Existing upstream reference: `deepseek-harness/`, initially pinned to `ddefc45`; verify current HEAD and working tree before connector work.
 - Open setup blockers: none for keyless scaffolding. Paid evaluation, exact candidate choice, release license and credentials are handled by their explicit future tasks.
 - Current web-server uptime is unknown. A successful launch was observed during setup; do not assume it is still running after a restart or new session.
@@ -120,6 +120,22 @@ Limitations / untested paths:
 - Scope preserved: no routing service logic (T027), no prepared-route tokens (T028), cost estimation optional until T011, tool relevance semantics deferred to T014.
 - Limitations / untested paths: validation is in-process only — no HTTP transport test (T029+); Windows host only.
 
+### V-20260922-06 — T006 stream interfaces + T010 eligibility engine
+
+- Task(s): T006, T010 (parallel work packages, distinct file ownership).
+- Source revision / working-tree state: Heimdall commit `38ccceb` (on top of `3ee470c`); `deepseek-harness/` at `ddefc45`, clean, untouched.
+- Commands and working directory (`C:\Users\User\Desktop\Heimdall`, via `pnpm.cmd`):
+  - `pnpm.cmd --filter @heimdall/contracts generate` + `gen:check` — exit 0; schema grows 71 → 84 `$defs`.
+  - `pnpm.cmd test` (workspace) — exit 0; 12 files, 101 tests (11 stream incl. 7 fixtures, 1 transport-boundary, 3 decimal, 14 eligibility incl. 2 seeded property tests, rest pre-existing).
+  - `pnpm.cmd typecheck` (root `tsc -b`), gateway `typecheck` (emit + tests projects) — exit 0.
+  - `pnpm.cmd lint`, `pnpm.cmd boundaries` (22 source files) — exit 0.
+  - Secret sweep across new domain code — no matches.
+- Artifact paths: 13 stream/accounting `$defs` + regenerated `generated/`/`openapi/`; `packages/contracts/src/stream.ts` (`isCommitEvent`, `isTerminalEvent`, `firstCommitSeq`); `packages/contracts/src/decimal.ts` (exact nanos parsing/comparison); `test/fixtures/invocation/*.json` (7); `test/stream.test.ts`, `test/transport-boundary.test.ts`, `test/decimal.test.ts`; `apps/gateway/src/modules/selection/domain/eligibility.ts`; `apps/gateway/test/eligibility.test.ts`; access `policy.ts` consolidated onto shared decimal helpers.
+- Fixes during verification: gateway tests first consumed stale contracts `dist` (build-before-test ordering); package entrypoint gained generated-type re-exports (carried from T005 turn); strict-null/test-type errors fixed without casts; prettier formatting only.
+- Engineering choices (within accepted design, no product change): single terminal event per attempt with late usage reconciliation; every tool-call fragment commits; abort fixture is committed-but-unterminated; TypeScript port interfaces deferred to T030 (needs its state-machine context — recorded split, not hidden scope); eligibility accumulates all rejections in input order; missing measurements reject as `insufficient_evidence` (numeric regression-vs-baseline deferred to T015; risk tiers carried but applied at ranking); leaf-only modality requirements; endpoint gate overlaps candidate surface with policy egress; property tests use a fixed-seed PRNG (mulberry32, seeds documented in-test) instead of a new dependency.
+- Scope preserved: no retry/fallback sequencing (T030), no provider transport (T031), no ranking (T015), no snapshot joins (T021).
+- Limitations / untested paths: fixtures are schema-level, not live provider streams (T031 budgeted test); no HTTP transport test (T029+); Windows host only.
+
 Never store keys, temporary browser access tokens, raw customer prompts, or sensitive outputs in this file. Reference a redacted artifact instead.
 
 ## Decision and change ledger
@@ -166,6 +182,32 @@ Verification record IDs: V-20260922-02
 Remaining limitations: no runtime behavior yet; CI file unexecuted remotely; Linux host check deferred to T049
 Decision changes: routine engineering choices only (TS 5.9.3 pin; prettier lint scoped to owned trees) — no product decision changed
 Next READY tasks: T002
+```
+
+```text
+Task ID / title: T006 — Provider and normalized stream interfaces
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: T002 DONE, T005 DONE
+Files / commit: commit 38ccceb (shared with T010; distinct files: 13 stream/accounting $defs + stream.ts + decimal.ts + 7 fixtures + stream/transport/decimal tests)
+Behavior delivered: streamEvent union (text/reasoning/tool-fragment deltas, usage incl. late, finish, typed error), usageRecord, actualModel, replayInfo, capabilityResolution, finishReason; isCommitEvent/isTerminalEvent/firstCommitSeq; exact decimal helpers shared with access policy; transport-boundary test (no HTTP libs in contracts); 15 new tests
+Verification record IDs: V-20260922-06
+Remaining limitations: schema-level fixtures only (live streams T031); TS port interfaces deferred to T030 (recorded split); no transport test (T029+)
+Decision changes: routine engineering choices only (listed in V-20260922-06) — no product decision changed
+Next READY tasks: T007, T008, T009, T011, T017
+```
+
+```text
+Task ID / title: T010 — Deterministic eligibility engine
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: T003 DONE, T004 DONE, T005 DONE
+Files / commit: commit 38ccceb (shared with T006; distinct files: selection/domain/eligibility.ts + eligibility.test.ts)
+Behavior delivered: filterEligible over 12 coded gates (allowlist/deny, verified modalities incl. unknown-reject, exact context fit with tool-schema + output reserve, verified tool/schema support, egress overlap, price effectiveness, evidence freshness, measurement-backed reliability/latency, explicit insufficient_evidence); all rejections accumulated in input order; exact estimator inputs, no global tokenizer; 12 targeted + 2 seeded property tests (monotonic tightening over 200 iters, unknown-never-passes fuzz)
+Verification record IDs: V-20260922-06
+Remaining limitations: numeric regression-vs-baseline and risk-tier application deferred to T015; measurement join deferred to T021/T027
+Decision changes: routine engineering choices only (listed in V-20260922-06) — no product decision changed
+Next READY tasks: T007, T008, T009, T011, T017
 ```
 
 ```text

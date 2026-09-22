@@ -100,7 +100,7 @@ Milestones: M0 contracts/fixtures and DSH feasibility; M1 keyless deterministic 
 **Acceptance/evidence:** Empty tools and disabled selection are distinct; caller state cannot carry authoritative permissions; no stable task identifier is introduced; explicit model pin and request-only chat/RAG fixtures work.
 
 ### T006 — Provider and normalized stream interfaces
-- [ ] Status: TODO
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `38ccceb`)
 **Depends on:** T002, T005.
 **Owns:** invocation ports, content events, token accounting and adapter contract fixtures.
 **Work:** Define candidate capability resolution, one-attempt invoke, cancellation, actual model identity, usage/finish ordering, replay metadata, and error certainty. Model fragmented tool JSON, first-content commitment, bounded parsing, nonstream aggregation, and unsupported-option errors.
@@ -130,7 +130,7 @@ Milestones: M0 contracts/fixtures and DSH feasibility; M1 keyless deterministic 
 ## 5. Pure domain behavior
 
 ### T010 — Deterministic eligibility engine
-- [ ] Status: TODO
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `38ccceb`)
 **Depends on:** T003, T004, T005.
 **Owns:** `selection/domain/eligibility`.
 **Work:** Evaluate authorization, modalities, context/output reserve, tool and schema support, endpoint policy, known price requirements, freshness, quality/reliability/latency gates. Return typed rejection reasons. Accept exact token estimator input rather than a global tokenizer assumption.
