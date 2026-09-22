@@ -952,5 +952,424 @@ export const ROOT_SCHEMA: SchemaObject = {
       required: ['tenant', 'rule', 'versions'],
       additionalProperties: false,
     },
+    role: {
+      title: 'Role',
+      type: 'string',
+      enum: ['system', 'user', 'assistant', 'tool'],
+    },
+    message: {
+      title: 'Message',
+      description:
+        'One canonical conversation message. Order within the messages array is significant and preserved by canonical hashing.',
+      type: 'object',
+      properties: {
+        role: {
+          $ref: '#/$defs/role',
+        },
+        content: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 256,
+          items: {
+            $ref: '#/$defs/contentBlock',
+          },
+        },
+        name: {
+          type: 'string',
+          pattern: '^[\\w.-]{1,64}$',
+          maxLength: 64,
+        },
+        toolCallId: {
+          type: 'string',
+          pattern: '^[\\w.-]{1,128}$',
+          maxLength: 128,
+        },
+      },
+      required: ['role', 'content'],
+      additionalProperties: false,
+    },
+    toolId: {
+      title: 'ToolId',
+      description: 'Stable caller-assigned tool identifier.',
+      type: 'string',
+      pattern: '^[A-Za-z0-9_.-]{1,128}$',
+      maxLength: 128,
+    },
+    sideEffectClass: {
+      title: 'SideEffectClass',
+      description:
+        'Declared side-effect class. Selection may consider it; execution authorization stays with the caller, and Heimdall never executes tools.',
+      type: 'string',
+      enum: ['read', 'write', 'external'],
+    },
+    toolVersion: {
+      title: 'ToolVersion',
+      type: 'string',
+      pattern: '^[A-Za-z0-9_.-]{1,64}$',
+      maxLength: 64,
+    },
+    toolDefinition: {
+      title: 'ToolDefinition',
+      description:
+        'One caller-authorized tool. Only selected definitions reach the model; order is significant and preserved.',
+      type: 'object',
+      properties: {
+        id: {
+          $ref: '#/$defs/toolId',
+        },
+        description: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 4000,
+        },
+        inputSchema: {
+          type: 'object',
+          maxProperties: 128,
+          propertyNames: {
+            maxLength: 256,
+          },
+          additionalProperties: true,
+        },
+        sideEffect: {
+          $ref: '#/$defs/sideEffectClass',
+        },
+        version: {
+          $ref: '#/$defs/toolVersion',
+        },
+        essential: {
+          type: 'boolean',
+        },
+        bundle: {
+          type: 'string',
+          pattern: '^[A-Za-z0-9_.-]{1,128}$',
+          maxLength: 128,
+        },
+        tags: {
+          type: 'array',
+          maxItems: 16,
+          items: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 64,
+          },
+        },
+      },
+      required: ['id', 'description', 'inputSchema', 'sideEffect', 'version', 'essential'],
+      additionalProperties: false,
+    },
+    toolSelection: {
+      title: 'ToolSelection',
+      description:
+        'Optional tool filtering. Disabled means no selection: supplied authorized tools pass through subject to validation. Enabled requires a catalog (possibly empty) and returns only selected definitions, possibly none.',
+      type: 'object',
+      properties: {
+        enabled: {
+          type: 'boolean',
+        },
+        catalog: {
+          type: 'array',
+          maxItems: 256,
+          items: {
+            $ref: '#/$defs/toolDefinition',
+          },
+        },
+      },
+      required: ['enabled'],
+      additionalProperties: false,
+      allOf: [
+        {
+          if: {
+            properties: {
+              enabled: {
+                const: true,
+              },
+            },
+            required: ['enabled'],
+          },
+          then: {
+            $ref: '#/$defs/enabledToolSelection',
+          },
+        },
+      ],
+    },
+    enabledToolSelection: {
+      title: 'EnabledToolSelection',
+      description:
+        'Enabled selection always names its catalog, even when empty. Split from toolSelection so Ajv strict mode sees a self-contained required property.',
+      type: 'object',
+      properties: {
+        enabled: {
+          const: true,
+        },
+        catalog: {
+          type: 'array',
+          maxItems: 256,
+          items: {
+            $ref: '#/$defs/toolDefinition',
+          },
+        },
+      },
+      required: ['catalog'],
+      additionalProperties: false,
+    },
+    reevaluationReason: {
+      title: 'ReevaluationReason',
+      description: 'Typed caller reason for mid-task model reevaluation.',
+      type: 'string',
+      enum: [
+        'no_progress',
+        'bad_output',
+        'context_growth',
+        'new_modality',
+        'new_risk',
+        'time_pressure',
+        'budget_change',
+        'provider_error',
+        'user_request',
+      ],
+    },
+    reevaluationRequest: {
+      title: 'ReevaluationRequest',
+      type: 'object',
+      properties: {
+        reason: {
+          $ref: '#/$defs/reevaluationReason',
+        },
+        detail: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 1024,
+        },
+      },
+      required: ['reason'],
+      additionalProperties: false,
+    },
+    routingState: {
+      title: 'RoutingState',
+      description:
+        'Compact caller-carried continuity data. Advisory for classification only: it carries no permissions, policy, allowlists, tenant identity, or task identifiers, and unknown fields are rejected.',
+      type: 'object',
+      properties: {
+        stateVersion: {
+          type: 'string',
+          pattern: '^[A-Za-z0-9_.-]{1,32}$',
+          maxLength: 32,
+        },
+        priorCandidate: {
+          $ref: '#/$defs/candidateId',
+        },
+        objective: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 2000,
+        },
+        evidenceRefs: {
+          type: 'array',
+          maxItems: 32,
+          items: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 256,
+          },
+        },
+        parentRevision: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 128,
+        },
+      },
+      required: ['stateVersion', 'objective'],
+      additionalProperties: false,
+    },
+    invocationBudget: {
+      title: 'InvocationBudget',
+      description:
+        'Per-invocation money bounds plus optional advisory remaining task budget. Hard-cap admission and ledger mechanics belong to later tasks; transport defaults apply when absent.',
+      type: 'object',
+      properties: {
+        hardCap: {
+          $ref: '#/$defs/money',
+        },
+        remainingTaskBudget: {
+          $ref: '#/$defs/money',
+        },
+      },
+      additionalProperties: false,
+    },
+    contextRequirements: {
+      title: 'ContextRequirements',
+      description: 'Advisory context needs used for candidate-specific token-fit checks.',
+      type: 'object',
+      properties: {
+        requiredInputTokens: {
+          $ref: '#/$defs/tokenCount',
+        },
+        requiredOutputTokens: {
+          $ref: '#/$defs/tokenCount',
+        },
+      },
+      additionalProperties: false,
+    },
+    routeRequest: {
+      title: 'RouteRequest',
+      description:
+        'Native route request. Tenant identity comes from authentication context and has no body field. First-slice runtime support is text-only; other modalities are expressible and rejected by adapters until verified.',
+      type: 'object',
+      properties: {
+        applicationProfile: {
+          $ref: '#/$defs/applicationProfile',
+        },
+        policyRef: {
+          $ref: '#/$defs/policyVersion',
+        },
+        messages: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 512,
+          items: {
+            $ref: '#/$defs/message',
+          },
+        },
+        toolSelection: {
+          $ref: '#/$defs/toolSelection',
+        },
+        routingState: {
+          $ref: '#/$defs/routingState',
+        },
+        modelPin: {
+          $ref: '#/$defs/modelPin',
+        },
+        reevaluation: {
+          $ref: '#/$defs/reevaluationRequest',
+        },
+        outputSchema: {
+          type: 'object',
+          maxProperties: 64,
+          propertyNames: {
+            maxLength: 256,
+          },
+          additionalProperties: true,
+        },
+        contextRequirements: {
+          $ref: '#/$defs/contextRequirements',
+        },
+        budget: {
+          $ref: '#/$defs/invocationBudget',
+        },
+        deadlineMs: {
+          $ref: '#/$defs/durationMs',
+        },
+        extensions: {
+          $ref: '#/$defs/extensions',
+        },
+      },
+      required: ['applicationProfile', 'policyRef', 'messages'],
+      additionalProperties: false,
+    },
+    reasonCode: {
+      title: 'ReasonCode',
+      type: 'string',
+      pattern: '^[a-z][a-z0-9_]{1,63}$',
+      maxLength: 64,
+    },
+    dependencyVersions: {
+      title: 'DependencyVersions',
+      description: 'Exact dependency revisions behind a decision, for reproducibility and audit.',
+      type: 'object',
+      properties: {
+        policy: {
+          $ref: '#/$defs/policyVersion',
+        },
+        catalog: {
+          $ref: '#/$defs/revisionId',
+        },
+        classifier: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 128,
+        },
+      },
+      required: ['policy', 'catalog'],
+      additionalProperties: false,
+    },
+    retentionInfo: {
+      title: 'RetentionInfo',
+      description: 'Whether a continuing task retained its model, and why.',
+      type: 'object',
+      properties: {
+        retained: {
+          type: 'boolean',
+        },
+        reason: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 256,
+        },
+      },
+      required: ['retained'],
+      additionalProperties: false,
+    },
+    routeResult: {
+      title: 'RouteResult',
+      description:
+        'Native route result: the selected candidate, the exact visible tool set, ranked fallbacks, and the revised caller state. Cost estimation is filled by later tasks and optional until then.',
+      type: 'object',
+      properties: {
+        decisionId: {
+          $ref: '#/$defs/decisionId',
+        },
+        candidateId: {
+          $ref: '#/$defs/candidateId',
+        },
+        candidateRevision: {
+          $ref: '#/$defs/revisionId',
+        },
+        selectedToolIds: {
+          type: 'array',
+          maxItems: 256,
+          items: {
+            $ref: '#/$defs/toolId',
+          },
+        },
+        rankedFallbacks: {
+          type: 'array',
+          maxItems: 32,
+          items: {
+            $ref: '#/$defs/candidateId',
+          },
+        },
+        reasonCodes: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 32,
+          items: {
+            $ref: '#/$defs/reasonCode',
+          },
+        },
+        dependencyVersions: {
+          $ref: '#/$defs/dependencyVersions',
+        },
+        estimatedCost: {
+          $ref: '#/$defs/money',
+        },
+        routingState: {
+          $ref: '#/$defs/routingState',
+        },
+        retention: {
+          $ref: '#/$defs/retentionInfo',
+        },
+      },
+      required: [
+        'decisionId',
+        'candidateId',
+        'selectedToolIds',
+        'rankedFallbacks',
+        'reasonCodes',
+        'dependencyVersions',
+        'routingState',
+        'retention',
+      ],
+      additionalProperties: false,
+    },
   },
 };

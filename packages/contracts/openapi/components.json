@@ -153,6 +153,20 @@
         ],
         "title": "ContentBlock"
       },
+      "contextRequirements": {
+        "additionalProperties": false,
+        "description": "Advisory context needs used for candidate-specific token-fit checks.",
+        "properties": {
+          "requiredInputTokens": {
+            "$ref": "#/components/schemas/tokenCount"
+          },
+          "requiredOutputTokens": {
+            "$ref": "#/components/schemas/tokenCount"
+          }
+        },
+        "title": "ContextRequirements",
+        "type": "object"
+      },
       "currency": {
         "description": "Three-letter uppercase currency code (ISO-4217-shaped). A full allowlist is deferred to real price ingestion (T032).",
         "pattern": "^[A-Z]{3}$",
@@ -172,6 +186,26 @@
         "pattern": "^dec_[A-Za-z0-9_-]{8,96}$",
         "title": "DecisionId",
         "type": "string"
+      },
+      "dependencyVersions": {
+        "additionalProperties": false,
+        "description": "Exact dependency revisions behind a decision, for reproducibility and audit.",
+        "properties": {
+          "catalog": {
+            "$ref": "#/components/schemas/revisionId"
+          },
+          "classifier": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/policyVersion"
+          }
+        },
+        "required": ["policy", "catalog"],
+        "title": "DependencyVersions",
+        "type": "object"
       },
       "durationMs": {
         "description": "Non-negative duration in whole milliseconds.",
@@ -234,6 +268,25 @@
         },
         "required": ["regions", "providers"],
         "title": "EgressRule",
+        "type": "object"
+      },
+      "enabledToolSelection": {
+        "additionalProperties": false,
+        "description": "Enabled selection always names its catalog, even when empty. Split from toolSelection so Ajv strict mode sees a self-contained required property.",
+        "properties": {
+          "catalog": {
+            "items": {
+              "$ref": "#/components/schemas/toolDefinition"
+            },
+            "maxItems": 256,
+            "type": "array"
+          },
+          "enabled": {
+            "const": true
+          }
+        },
+        "required": ["catalog"],
+        "title": "EnabledToolSelection",
         "type": "object"
       },
       "endpointPolicy": {
@@ -439,6 +492,20 @@
         "title": "ImageBlock",
         "type": "object"
       },
+      "invocationBudget": {
+        "additionalProperties": false,
+        "description": "Per-invocation money bounds plus optional advisory remaining task budget. Hard-cap admission and ledger mechanics belong to later tasks; transport defaults apply when absent.",
+        "properties": {
+          "hardCap": {
+            "$ref": "#/components/schemas/money"
+          },
+          "remainingTaskBudget": {
+            "$ref": "#/components/schemas/money"
+          }
+        },
+        "title": "InvocationBudget",
+        "type": "object"
+      },
       "latencyLimits": {
         "additionalProperties": false,
         "description": "Application latency requirements. Numerical SLO values are calibrated before hosted rollout.",
@@ -452,6 +519,36 @@
         },
         "required": ["maxP99Ms"],
         "title": "LatencyLimits",
+        "type": "object"
+      },
+      "message": {
+        "additionalProperties": false,
+        "description": "One canonical conversation message. Order within the messages array is significant and preserved by canonical hashing.",
+        "properties": {
+          "content": {
+            "items": {
+              "$ref": "#/components/schemas/contentBlock"
+            },
+            "maxItems": 256,
+            "minItems": 1,
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 64,
+            "pattern": "^[\\w.-]{1,64}$",
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/role"
+          },
+          "toolCallId": {
+            "maxLength": 128,
+            "pattern": "^[\\w.-]{1,128}$",
+            "type": "string"
+          }
+        },
+        "required": ["role", "content"],
+        "title": "Message",
         "type": "object"
       },
       "mimeType": {
@@ -740,6 +837,44 @@
         "title": "QualityBaseline",
         "type": "object"
       },
+      "reasonCode": {
+        "maxLength": 64,
+        "pattern": "^[a-z][a-z0-9_]{1,63}$",
+        "title": "ReasonCode",
+        "type": "string"
+      },
+      "reevaluationReason": {
+        "description": "Typed caller reason for mid-task model reevaluation.",
+        "enum": [
+          "no_progress",
+          "bad_output",
+          "context_growth",
+          "new_modality",
+          "new_risk",
+          "time_pressure",
+          "budget_change",
+          "provider_error",
+          "user_request"
+        ],
+        "title": "ReevaluationReason",
+        "type": "string"
+      },
+      "reevaluationRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "detail": {
+            "maxLength": 1024,
+            "minLength": 1,
+            "type": "string"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/reevaluationReason"
+          }
+        },
+        "required": ["reason"],
+        "title": "ReevaluationRequest",
+        "type": "object"
+      },
       "refSource": {
         "additionalProperties": false,
         "description": "Caller-held content reference. The gateway never dereferences it; adapters declare what they accept.",
@@ -778,6 +913,23 @@
         "title": "RequestId",
         "type": "string"
       },
+      "retentionInfo": {
+        "additionalProperties": false,
+        "description": "Whether a continuing task retained its model, and why.",
+        "properties": {
+          "reason": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "retained": {
+            "type": "boolean"
+          }
+        },
+        "required": ["retained"],
+        "title": "RetentionInfo",
+        "type": "object"
+      },
       "revisionId": {
         "description": "Opaque profile-revision identifier.",
         "maxLength": 100,
@@ -790,6 +942,163 @@
         "enum": ["low", "standard", "high", "critical"],
         "title": "RiskTier",
         "type": "string"
+      },
+      "role": {
+        "enum": ["system", "user", "assistant", "tool"],
+        "title": "Role",
+        "type": "string"
+      },
+      "routeRequest": {
+        "additionalProperties": false,
+        "description": "Native route request. Tenant identity comes from authentication context and has no body field. First-slice runtime support is text-only; other modalities are expressible and rejected by adapters until verified.",
+        "properties": {
+          "applicationProfile": {
+            "$ref": "#/components/schemas/applicationProfile"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/invocationBudget"
+          },
+          "contextRequirements": {
+            "$ref": "#/components/schemas/contextRequirements"
+          },
+          "deadlineMs": {
+            "$ref": "#/components/schemas/durationMs"
+          },
+          "extensions": {
+            "$ref": "#/components/schemas/extensions"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/message"
+            },
+            "maxItems": 512,
+            "minItems": 1,
+            "type": "array"
+          },
+          "modelPin": {
+            "$ref": "#/components/schemas/modelPin"
+          },
+          "outputSchema": {
+            "additionalProperties": true,
+            "maxProperties": 64,
+            "propertyNames": {
+              "maxLength": 256
+            },
+            "type": "object"
+          },
+          "policyRef": {
+            "$ref": "#/components/schemas/policyVersion"
+          },
+          "reevaluation": {
+            "$ref": "#/components/schemas/reevaluationRequest"
+          },
+          "routingState": {
+            "$ref": "#/components/schemas/routingState"
+          },
+          "toolSelection": {
+            "$ref": "#/components/schemas/toolSelection"
+          }
+        },
+        "required": ["applicationProfile", "policyRef", "messages"],
+        "title": "RouteRequest",
+        "type": "object"
+      },
+      "routeResult": {
+        "additionalProperties": false,
+        "description": "Native route result: the selected candidate, the exact visible tool set, ranked fallbacks, and the revised caller state. Cost estimation is filled by later tasks and optional until then.",
+        "properties": {
+          "candidateId": {
+            "$ref": "#/components/schemas/candidateId"
+          },
+          "candidateRevision": {
+            "$ref": "#/components/schemas/revisionId"
+          },
+          "decisionId": {
+            "$ref": "#/components/schemas/decisionId"
+          },
+          "dependencyVersions": {
+            "$ref": "#/components/schemas/dependencyVersions"
+          },
+          "estimatedCost": {
+            "$ref": "#/components/schemas/money"
+          },
+          "rankedFallbacks": {
+            "items": {
+              "$ref": "#/components/schemas/candidateId"
+            },
+            "maxItems": 32,
+            "type": "array"
+          },
+          "reasonCodes": {
+            "items": {
+              "$ref": "#/components/schemas/reasonCode"
+            },
+            "maxItems": 32,
+            "minItems": 1,
+            "type": "array"
+          },
+          "retention": {
+            "$ref": "#/components/schemas/retentionInfo"
+          },
+          "routingState": {
+            "$ref": "#/components/schemas/routingState"
+          },
+          "selectedToolIds": {
+            "items": {
+              "$ref": "#/components/schemas/toolId"
+            },
+            "maxItems": 256,
+            "type": "array"
+          }
+        },
+        "required": [
+          "decisionId",
+          "candidateId",
+          "selectedToolIds",
+          "rankedFallbacks",
+          "reasonCodes",
+          "dependencyVersions",
+          "routingState",
+          "retention"
+        ],
+        "title": "RouteResult",
+        "type": "object"
+      },
+      "routingState": {
+        "additionalProperties": false,
+        "description": "Compact caller-carried continuity data. Advisory for classification only: it carries no permissions, policy, allowlists, tenant identity, or task identifiers, and unknown fields are rejected.",
+        "properties": {
+          "evidenceRefs": {
+            "items": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 32,
+            "type": "array"
+          },
+          "objective": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "parentRevision": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "priorCandidate": {
+            "$ref": "#/components/schemas/candidateId"
+          },
+          "stateVersion": {
+            "maxLength": 32,
+            "pattern": "^[A-Za-z0-9_.-]{1,32}$",
+            "type": "string"
+          }
+        },
+        "required": ["stateVersion", "objective"],
+        "title": "RoutingState",
+        "type": "object"
       },
       "safeCapacity": {
         "additionalProperties": false,
@@ -808,6 +1117,12 @@
         "required": ["safeInputTokens", "safeOutputTokens", "outputReserveTokens"],
         "title": "SafeCapacity",
         "type": "object"
+      },
+      "sideEffectClass": {
+        "description": "Declared side-effect class. Selection may consider it; execution authorization stays with the caller, and Heimdall never executes tools.",
+        "enum": ["read", "write", "external"],
+        "title": "SideEffectClass",
+        "type": "string"
       },
       "tenantId": {
         "description": "Authenticated tenant identifier. Resolved from authentication context, never from a request body field.",
@@ -847,6 +1162,95 @@
         "title": "TokenCount",
         "type": "integer"
       },
+      "toolDefinition": {
+        "additionalProperties": false,
+        "description": "One caller-authorized tool. Only selected definitions reach the model; order is significant and preserved.",
+        "properties": {
+          "bundle": {
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "essential": {
+            "type": "boolean"
+          },
+          "id": {
+            "$ref": "#/components/schemas/toolId"
+          },
+          "inputSchema": {
+            "additionalProperties": true,
+            "maxProperties": 128,
+            "propertyNames": {
+              "maxLength": 256
+            },
+            "type": "object"
+          },
+          "sideEffect": {
+            "$ref": "#/components/schemas/sideEffectClass"
+          },
+          "tags": {
+            "items": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 16,
+            "type": "array"
+          },
+          "version": {
+            "$ref": "#/components/schemas/toolVersion"
+          }
+        },
+        "required": ["id", "description", "inputSchema", "sideEffect", "version", "essential"],
+        "title": "ToolDefinition",
+        "type": "object"
+      },
+      "toolId": {
+        "description": "Stable caller-assigned tool identifier.",
+        "maxLength": 128,
+        "pattern": "^[A-Za-z0-9_.-]{1,128}$",
+        "title": "ToolId",
+        "type": "string"
+      },
+      "toolSelection": {
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "enabled": {
+                  "const": true
+                }
+              },
+              "required": ["enabled"]
+            },
+            "then": {
+              "$ref": "#/components/schemas/enabledToolSelection"
+            }
+          }
+        ],
+        "description": "Optional tool filtering. Disabled means no selection: supplied authorized tools pass through subject to validation. Enabled requires a catalog (possibly empty) and returns only selected definitions, possibly none.",
+        "properties": {
+          "catalog": {
+            "items": {
+              "$ref": "#/components/schemas/toolDefinition"
+            },
+            "maxItems": 256,
+            "type": "array"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": ["enabled"],
+        "title": "ToolSelection",
+        "type": "object"
+      },
       "toolSupport": {
         "additionalProperties": false,
         "description": "Generic tool-calling and structured-output support. Measured success with specific catalogs is quality evidence, not part of this signal.",
@@ -861,6 +1265,12 @@
         "required": ["genericToolCalling", "structuredOutput"],
         "title": "ToolSupport",
         "type": "object"
+      },
+      "toolVersion": {
+        "maxLength": 64,
+        "pattern": "^[A-Za-z0-9_.-]{1,64}$",
+        "title": "ToolVersion",
+        "type": "string"
       },
       "urlSource": {
         "additionalProperties": false,

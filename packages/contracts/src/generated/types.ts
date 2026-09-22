@@ -189,6 +189,58 @@ export type PolicyVersion = string;
  * via the `definition` "riskTier".
  */
 export type RiskTier = 'low' | 'standard' | 'high' | 'critical';
+/**
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "role".
+ */
+export type Role = 'system' | 'user' | 'assistant' | 'tool';
+/**
+ * Stable caller-assigned tool identifier.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "toolId".
+ */
+export type ToolId = string;
+/**
+ * Declared side-effect class. Selection may consider it; execution authorization stays with the caller, and Heimdall never executes tools.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "sideEffectClass".
+ */
+export type SideEffectClass = 'read' | 'write' | 'external';
+/**
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "toolVersion".
+ */
+export type ToolVersion = string;
+/**
+ * Optional tool filtering. Disabled means no selection: supplied authorized tools pass through subject to validation. Enabled requires a catalog (possibly empty) and returns only selected definitions, possibly none.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "toolSelection".
+ */
+export type ToolSelection = ToolSelection1;
+/**
+ * Typed caller reason for mid-task model reevaluation.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "reevaluationReason".
+ */
+export type ReevaluationReason =
+  | 'no_progress'
+  | 'bad_output'
+  | 'context_growth'
+  | 'new_modality'
+  | 'new_risk'
+  | 'time_pressure'
+  | 'budget_change'
+  | 'provider_error'
+  | 'user_request';
+/**
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "reasonCode".
+ */
+export type ReasonCode = string;
 
 /**
  * Single schema source for Heimdall V1 contract primitives and error vocabulary (T002). Generated TypeScript and OpenAPI components derive from this file; never edit generated output. Request/result composition belongs to later tasks (T005+).
@@ -862,4 +914,272 @@ export interface EffectivePolicy {
     tenant: PolicyVersion;
     application?: PolicyVersion;
   };
+}
+/**
+ * One canonical conversation message. Order within the messages array is significant and preserved by canonical hashing.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "message".
+ */
+export interface Message {
+  role: Role;
+  /**
+   * @minItems 1
+   * @maxItems 256
+   */
+  content: [ContentBlock, ...ContentBlock[]];
+  name?: string;
+  toolCallId?: string;
+}
+/**
+ * One caller-authorized tool. Only selected definitions reach the model; order is significant and preserved.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "toolDefinition".
+ */
+export interface ToolDefinition {
+  id: ToolId;
+  description: string;
+  inputSchema: {
+    [k: string]: unknown;
+  };
+  sideEffect: SideEffectClass;
+  version: ToolVersion;
+  essential: boolean;
+  bundle?: string;
+  /**
+   * @maxItems 16
+   */
+  tags?:
+    | []
+    | [string]
+    | [string, string]
+    | [string, string, string]
+    | [string, string, string, string]
+    | [string, string, string, string, string]
+    | [string, string, string, string, string, string]
+    | [string, string, string, string, string, string, string]
+    | [string, string, string, string, string, string, string, string]
+    | [string, string, string, string, string, string, string, string, string]
+    | [string, string, string, string, string, string, string, string, string, string]
+    | [string, string, string, string, string, string, string, string, string, string, string]
+    | [
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+      ]
+    | [
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+      ]
+    | [
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+      ]
+    | [
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+      ]
+    | [
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+      ];
+}
+export interface ToolSelection1 {
+  enabled: boolean;
+  /**
+   * @maxItems 256
+   */
+  catalog?: ToolDefinition[];
+}
+/**
+ * Enabled selection always names its catalog, even when empty. Split from toolSelection so Ajv strict mode sees a self-contained required property.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "enabledToolSelection".
+ */
+export interface EnabledToolSelection {
+  enabled?: true;
+  /**
+   * @maxItems 256
+   */
+  catalog: ToolDefinition[];
+}
+/**
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "reevaluationRequest".
+ */
+export interface ReevaluationRequest {
+  reason: ReevaluationReason;
+  detail?: string;
+}
+/**
+ * Compact caller-carried continuity data. Advisory for classification only: it carries no permissions, policy, allowlists, tenant identity, or task identifiers, and unknown fields are rejected.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "routingState".
+ */
+export interface RoutingState {
+  stateVersion: string;
+  priorCandidate?: CandidateId;
+  objective: string;
+  /**
+   * @maxItems 32
+   */
+  evidenceRefs?: string[];
+  parentRevision?: string;
+}
+/**
+ * Per-invocation money bounds plus optional advisory remaining task budget. Hard-cap admission and ledger mechanics belong to later tasks; transport defaults apply when absent.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "invocationBudget".
+ */
+export interface InvocationBudget {
+  hardCap?: Money;
+  remainingTaskBudget?: Money;
+}
+/**
+ * Advisory context needs used for candidate-specific token-fit checks.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "contextRequirements".
+ */
+export interface ContextRequirements {
+  requiredInputTokens?: TokenCount;
+  requiredOutputTokens?: TokenCount;
+}
+/**
+ * Native route request. Tenant identity comes from authentication context and has no body field. First-slice runtime support is text-only; other modalities are expressible and rejected by adapters until verified.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "routeRequest".
+ */
+export interface RouteRequest {
+  applicationProfile: ApplicationProfile;
+  policyRef: PolicyVersion;
+  /**
+   * @minItems 1
+   * @maxItems 512
+   */
+  messages: [Message, ...Message[]];
+  toolSelection?: ToolSelection;
+  routingState?: RoutingState;
+  modelPin?: ModelPin;
+  reevaluation?: ReevaluationRequest;
+  outputSchema?: {
+    [k: string]: unknown;
+  };
+  contextRequirements?: ContextRequirements;
+  budget?: InvocationBudget;
+  deadlineMs?: DurationMs;
+  extensions?: Extensions;
+}
+/**
+ * Exact dependency revisions behind a decision, for reproducibility and audit.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "dependencyVersions".
+ */
+export interface DependencyVersions {
+  policy: PolicyVersion;
+  catalog: RevisionId;
+  classifier?: string;
+}
+/**
+ * Whether a continuing task retained its model, and why.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "retentionInfo".
+ */
+export interface RetentionInfo {
+  retained: boolean;
+  reason?: string;
+}
+/**
+ * Native route result: the selected candidate, the exact visible tool set, ranked fallbacks, and the revised caller state. Cost estimation is filled by later tasks and optional until then.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "routeResult".
+ */
+export interface RouteResult {
+  decisionId: DecisionId;
+  candidateId: CandidateId;
+  candidateRevision?: RevisionId;
+  /**
+   * @maxItems 256
+   */
+  selectedToolIds: ToolId[];
+  /**
+   * @maxItems 32
+   */
+  rankedFallbacks: CandidateId[];
+  /**
+   * @minItems 1
+   * @maxItems 32
+   */
+  reasonCodes: [ReasonCode, ...ReasonCode[]];
+  dependencyVersions: DependencyVersions;
+  estimatedCost?: Money;
+  routingState: RoutingState;
+  retention: RetentionInfo;
 }
