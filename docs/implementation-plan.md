@@ -195,7 +195,7 @@ Milestones: M0 contracts/fixtures and DSH feasibility; M1 keyless deterministic 
 **Acceptance/evidence:** Deterministic answers support pure domain tests; validation rejects unexpected options, missing question IDs, nonfinite/out-of-range values and oversized responses.
 
 ### T019 — Keyless route golden scenarios
-- [ ] Status: TODO
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `ff3a203`)
 **Depends on:** T016, T017, T018.
 **Owns:** core scenario suite and expected decision traces.
 **Work:** Execute initial/retained/new task, compound work, no tools, essential-tool overflow, no eligible model, strict pin, stale price, increased risk and malformed classifier cases. Assert public decisions, not internal call order except explicit pass/attempt bounds.

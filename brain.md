@@ -13,11 +13,12 @@ The latest explicit user decision wins over an older recommendation. Do not sile
 
 ## Current checkpoint
 
-- Phase: T018+T009 complete; fake semantic engine and evaluation manifests committed.
-- Heimdall application code: pure domain through two-pass (T001–T006, T008, T010–T018 except T007/T009-docs) + testkit provider/semantic harnesses + eval manifests. No routing composition, persistence, transport, or SDK yet.
-- Mandatory implementation work: T001–T006, T008–T018 DONE; T007, T019+ TODO. Optional later work: T054 and T055, both TODO and disabled by default.
-- Next READY tasks: T007 needs T002+T005+T006 — READY. T019 needs T016+T017+T018 — READY now (all DONE). T020 needs T003+T004+T006+T012 — READY (requires a PostgreSQL instance — verify availability first). T024 needs T021+T005+T018 — blocked on T021. Dependency-ready now: T007, T019, T020.
-- Active implementation owner/task: none (T018+T009 closed 2026-09-22).
+- Phase: T019 complete (M1 deterministic core proven); strict-pin fix included.
+- Heimdall application code: keyless deterministic route end to end (T001–T006, T008–T019). No persistence, transport, SDK, or connector yet.
+- Mandatory implementation work: T001–T006, T008–T019 DONE; T007, T020+ TODO. Optional later work: T054 and T055, both TODO and disabled by default.
+- Next READY tasks: T007 needs T002+T005+T006 — READY. T020 needs T003+T004+T006+T012 — READY (PostgreSQL 16 service running; psql at `C:\Program Files\PostgreSQL\16\bin\`; auth setup is T020's first step). T021 needs T020+T003 — blocked on T020. T024 needs T021+T005+T018 — blocked on T021. T026 needs T025+T024+T013 — blocked on T025/T024. Dependency-ready now: T007, T020.
+- Active implementation owner/task: none (T019 closed 2026-09-22).
+- T020 environment note (2026-09-22): PostgreSQL 16 service `postgresql-x64-16` is RUNNING; `psql.exe` at `C:\Program Files\PostgreSQL\16\bin\` (not on PATH). Superuser auth for a test database is T020's first step. T020 stays READY.
 - Existing upstream reference: `deepseek-harness/`, initially pinned to `ddefc45`; verify current HEAD and working tree before connector work.
 - Open setup blockers: none for keyless scaffolding. Paid evaluation, exact candidate choice, release license and credentials are handled by their explicit future tasks.
 - Current web-server uptime is unknown. A successful launch was observed during setup; do not assume it is still running after a restart or new session.
@@ -198,6 +199,22 @@ Limitations / untested paths:
 - Scope preserved: live Jev behavior (T025), instance selection and paid runs (T032/T041), final gate values (T045).
 - Limitations / untested paths: no live dataset downloads performed (keyless manifest work); no HTTP transport test (T029+); Windows host only.
 
+### V-20260922-12 — T019 golden scenarios (M1)
+
+- Task(s): T019.
+- Source revision / working-tree state: Heimdall commit `ff3a203` (on top of `d2a5cdc`); `deepseek-harness/` at `ddefc45`, clean, untouched.
+- Commands and working directory (`C:\Users\User\Desktop\Heimdall`, via `pnpm.cmd`):
+  - `pnpm.cmd test` (workspace) — exit 0; 22 files, 200 tests (12 golden scenarios, rest pre-existing).
+  - `pnpm.cmd typecheck` (root), gateway `typecheck` — exit 0.
+  - `pnpm.cmd lint`, `pnpm.cmd boundaries` (29 source files) — exit 0.
+  - Secret sweep on new files — no matches.
+- Artifact paths: `apps/gateway/test/golden-route.test.ts` (harness + 12 scenarios); strict-pin fix in `selection/domain/ranking.ts` + regression test; `@heimdall/testkit` devDep on gateway for the fake engine.
+- Fix during verification (T015 follow-up, history preserved): strict pins with `allowFallback: false` fell through to normal ranking — a silent model switch the design forbids. Now fails POLICY_DENIED when the pinned candidate is ineligible; permissive pins still fall through. Regression tests added.
+- Engineering choices (within accepted design, no product change): harness pre-computes retained eligibility via the real eligibility engine before continuity; semantic-to-boolean mapping lives in test glue with T026 named as its production home; malformed classifier output maps to uncertain (retain safe default); increased-risk requests route normally with hard gates intact (risk application beyond floors awaits classifier evidence in T025+).
+- M1 status: deterministic core proven keyless — initial/retained/new-task/compound/no-tools/overflow/no-route/pin/stale-price/risk/malformed cases pass through real module interfaces with explained decisions. No database or paid calls involved.
+- Scope preserved: routing service wrapping (T027), persistence (T020+), transport/SDK/connector.
+- Limitations / untested paths: no HTTP transport test (T029+); Windows host only.
+
 ### V-20260922-08 — T013 continuity reducer + T014 tool selection
 
 - Task(s): T013, T014 (parallel work packages, distinct file ownership).
@@ -259,6 +276,19 @@ Verification record IDs: V-20260922-02
 Remaining limitations: no runtime behavior yet; CI file unexecuted remotely; Linux host check deferred to T049
 Decision changes: routine engineering choices only (TS 5.9.3 pin; prettier lint scoped to owned trees) — no product decision changed
 Next READY tasks: T002
+```
+
+```text
+Task ID / title: T019 — Keyless route golden scenarios
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: T016 DONE, T017 DONE, T018 DONE
+Files / commit: commit ff3a203 (harness + 12 scenarios + strict-pin fix in ranking + regression test + testkit devDep)
+Behavior delivered: M1 proof through real module interfaces — initial/retained/new-task/compound/no-tools/essential-overflow/no-route/strict-pin/stale-price/increased-risk/malformed-classifier scenarios with explained decisions; unauthorized tools and unpriced-cheap exclusion asserted; strict-pin silent-switch bug fixed (POLICY_DENIED)
+Verification record IDs: V-20260922-12
+Remaining limitations: harness glue mapping moves to T026; no transport/persistence coverage (later milestones)
+Decision changes: bug fix to T015 within accepted design (no product change) — recorded above, history preserved
+Next READY tasks: T007, T020
 ```
 
 ```text
