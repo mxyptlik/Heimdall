@@ -79,14 +79,14 @@ Milestones: M0 contracts/fixtures and DSH feasibility; M1 keyless deterministic 
 **Acceptance/evidence:** Round-trip valid fixtures; reject unknown/malformed/oversized fields, unsafe numbers, invalid currencies, and task-ID fields. Contract generation has a clean diff and deterministic output.
 
 ### T003 — Candidate profile and evidence schemas
-- [ ] Status: TODO
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `6093164`)
 **Depends on:** T002.
 **Owns:** catalog domain records and synthetic profile fixtures.
 **Work:** Model candidate/config identity, capability unknown/verified/unsupported states, safe context/output capacity, endpoint policy, price schedules, source lineage, uncertainty/sample size, effective dates, and revision snapshots. Define conflict/quarantine rules. Separate declared, measured, and fixture evidence.
 **Acceptance/evidence:** Import fixture supports two hosted families and a local endpoint without vendor-specific core types; missing hard capability stays unknown; fixtures cannot be published in production; duplicate IDs and invalid pricing units fail.
 
 ### T004 — Effective policy schemas and resolver
-- [ ] Status: TODO
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `6093164`)
 **Depends on:** T002.
 **Owns:** access domain policy resolution.
 **Work:** Define platform/tenant/application rules, profile baseline/floor, latency/reliability limits, data egress, allowlists/pins, risk minimums, budgets, and overrides. Implement restrictive intersection and explicit conflict errors. Model classifier egress independently from completion egress.

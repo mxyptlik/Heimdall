@@ -13,11 +13,11 @@ The latest explicit user decision wins over an older recommendation. Do not sile
 
 ## Current checkpoint
 
-- Phase: T002 complete; contract primitives, error vocabulary, and generation pipeline committed.
-- Heimdall application code: workspace scaffold (T001) + `@heimdall/contracts` primitives/validation/generation (T002). No routing/selection/invocation logic yet.
-- Mandatory implementation work: T001–T002 DONE; T003–T053 TODO. Optional later work: T054 and T055, both TODO and disabled by default.
-- Next READY tasks: T003 (candidate profile schemas; needs T002 only), T004 (policy schemas; needs T002 only), T008 (semantic port; needs T002+T005 — blocked on T005), T009 (dataset manifest; needs T002 only). Dependency-ready now: T003, T004, T009.
-- Active implementation owner/task: none (T002 closed 2026-09-22).
+- Phase: T003+T004 complete; profiles, policy resolution, and synthetic fixtures committed.
+- Heimdall application code: workspace (T001) + contracts primitives/generation (T002) + catalog profile domain + access policy resolver (T003/T004). No routing/selection/invocation logic yet.
+- Mandatory implementation work: T001–T004 DONE; T005–T053 TODO. Optional later work: T054 and T055, both TODO and disabled by default.
+- Next READY tasks: T005 needs T002+T004 — READY now (T004 DONE). T009 needs T002 — READY (independent manifest work). T006 needs T002+T005 — blocked on T005. T008 needs T002+T005 — blocked on T005. T010 needs T003+T004+T005 — blocked on T005. Dependency-ready now: T005, T009.
+- Active implementation owner/task: none (T003+T004 closed 2026-09-22).
 - Existing upstream reference: `deepseek-harness/`, initially pinned to `ddefc45`; verify current HEAD and working tree before connector work.
 - Open setup blockers: none for keyless scaffolding. Paid evaluation, exact candidate choice, release license and credentials are handled by their explicit future tasks.
 - Current web-server uptime is unknown. A successful launch was observed during setup; do not assume it is still running after a restart or new session.
@@ -87,6 +87,23 @@ Limitations / untested paths:
 - Engineering choices (within accepted design, no product change): single-file schema source; embedded root schema keeps `dist` self-contained; `extensions` reserved with zero allowed keys in v1; currency as 3-letter pattern (full allowlist deferred to T032); timestamp shape plus field ranges with Feb-30-class dates documented as consumer concern; ERROR_CATALOG default retryability per code with recorded reasons.
 - Limitations / untested paths: request/result composition belongs to T005 (no RouteRequest yet); catalog/policy/usage composites intentionally absent (T003/T004/T006 own them); Ajv validated in-process JSON values only — no HTTP transport test yet (T029+); Windows host only.
 
+### V-20260922-04 — T003 candidate profiles + T004 policy resolution
+
+- Task(s): T003, T004 (parallel work packages, distinct file ownership).
+- Source revision / working-tree state: Heimdall commit `6093164` (on top of `3ae54ba`); `deepseek-harness/` at `ddefc45`, clean, untouched.
+- Commands and working directory (`C:\Users\User\Desktop\Heimdall`, via `pnpm.cmd`):
+  - `pnpm.cmd --filter @heimdall/contracts generate` + `gen:check` — exit 0; schema grows 25 → 50 `$defs`, OpenAPI components regenerated deterministically.
+  - `pnpm.cmd typecheck` (root `tsc -b`, all projects) — exit 0.
+  - `pnpm.cmd --filter @heimdall/gateway typecheck` (`tsc -b` + tests project) — exit 0.
+  - `pnpm.cmd test` (workspace) — exit 0; 6 files, 54 tests (29 contracts + 13 access-policy + 12 catalog-profiles).
+  - `pnpm.cmd lint`, `pnpm.cmd boundaries` (18 source files) — exit 0.
+  - Secret sweep across `apps/gateway` — no matches.
+- Artifact paths: schema additions in `heimdall.v1.json` + regenerated `generated/`/`openapi/`; `apps/gateway/src/modules/catalog/domain/profiles.ts`; `apps/gateway/src/modules/access/domain/policy.ts`; `apps/gateway/test/*.test.ts`; `apps/gateway/tsconfig.tests.json`; `data/catalog/synthetic-profiles.v1.json` (3 synthetic records: 2 hosted families + 1 local).
+- Fixes during verification: fixture path needed three directory ups (test → gateway → apps → root); gateway tests initially consumed stale contracts `dist` (fixed by build-before-test ordering, no code change); package entrypoint was missing generated-type re-exports (`export * from './generated/types.js'` added to contracts `index.ts`); strict-null errors in tests/domain fixed without casts (`riskRank` guard, `parseNanos` undefined guard, `first`/`second` fixture helpers, explicit `PolicyRule` annotation); a failed `tsc -b` with tests under `rootDir: src` emitted stray in-place `.js/.d.ts` — deleted (see also V-20260922-03 pattern).
+- Engineering choices (within accepted design, no product change): `policyRule` complete per level + partial `policyOverride` with narrowing-only merge (subset allowlists, union denials, min caps, max floors, subset egress, no pin replacement, frozen quality reference); tenant level required in resolver inputs with empty override `{}` as default; tenant bound from authenticated parameter only; money/fraction compared as exact scaled BigInt nanos; fixture gating via required `fixture` flag + `allowFixture` option; `detectConflicts` defines quarantine inputs, enforcement deferred to T021 publication; quality reference immutable across levels.
+- Scope preserved: no request/result schemas (T005), no storage/publication (T020/T021/T022), no usage composites (T006), snapshot publication mechanics deferred to T021.
+- Limitations / untested paths: resolver is pure/in-process — no HTTP/admin transport (T022/T029); policy versions are opaque IDs with no rotation semantics yet (T022); candidate `revision` recorded but snapshot immutability untested without storage (T021); Windows host only.
+
 Never store keys, temporary browser access tokens, raw customer prompts, or sensitive outputs in this file. Reference a redacted artifact instead.
 
 ## Decision and change ledger
@@ -133,6 +150,32 @@ Verification record IDs: V-20260922-02
 Remaining limitations: no runtime behavior yet; CI file unexecuted remotely; Linux host check deferred to T049
 Decision changes: routine engineering choices only (TS 5.9.3 pin; prettier lint scoped to owned trees) — no product decision changed
 Next READY tasks: T002
+```
+
+```text
+Task ID / title: T003 — Candidate profile and evidence schemas
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: T002 DONE (contract primitives + generation pipeline)
+Files / commit: commit 6093164 (shared with T004; distinct files: schema profile $defs + catalog domain + fixture + catalog tests)
+Behavior delivered: 16 profile $defs (capabilityState with first-class unknown, evidenceKind, candidateId/revisionId, modelRef with alias-resolution flag, modalitySupport, toolSupport, safeCapacity, endpointPolicy, priceSchedule, evidenceRecord, candidateProfile with required fixture flag); validateCatalogUpload (schema + unique IDs + fixture gate); capabilityFromExplicit (absent evidence stays unknown); detectConflicts (quarantine inputs, enforcement T021); synthetic fixture (2 hosted families + local, unmistakably synthetic); 12 tests
+Verification record IDs: V-20260922-04
+Remaining limitations: snapshot publication/rollback deferred to T021; no real candidate data (T032)
+Decision changes: routine engineering choices only (listed in V-20260922-04) — no product decision changed
+Next READY tasks: T005, T009
+```
+
+```text
+Task ID / title: T004 — Effective policy schemas and resolver
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: T002 DONE
+Files / commit: commit 6093164 (shared with T003; distinct files: schema policy $defs + access domain + access tests)
+Behavior delivered: 13 policy $defs (tenantId, policyVersion, riskTier, fraction, egressRule with independent classifier egress, qualityBaseline, latencyLimits, reliabilityFloor, budgetPolicy, modelPin, complete policyRule, partial policyOverride, effectivePolicy with version provenance); resolvePolicy pure restrictive intersection (narrow-only merge, explicit POLICY_DENIED conflicts, final pin recheck, deterministic, tenant from authenticated identity); exact BigInt money/fraction comparison; 13 tests
+Verification record IDs: V-20260922-04
+Remaining limitations: transport/admin/quota/secrets deferred to T022/T029; opaque versions without rotation (T022)
+Decision changes: routine engineering choices only (listed in V-20260922-04) — no product decision changed
+Next READY tasks: T005, T009
 ```
 
 ```text
