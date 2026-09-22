@@ -1,0 +1,11 @@
+{
+  "name": "malformed-frames",
+  "description": "Negative fixture: a text delta missing its payload and an unknown event kind. At least one frame must fail validation.",
+  "valid": false,
+  "firstCommitSeq": null,
+  "events": [
+    { "attempt": "att_fixture004", "seq": 0, "kind": "text" },
+    { "attempt": "att_fixture004", "seq": 1, "kind": "teleport", "delta": "nowhere" },
+    { "attempt": "att_fixture004", "seq": 2, "kind": "text", "delta": "ok" }
+  ]
+}

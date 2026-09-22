@@ -1,0 +1,7 @@
+{
+  "name": "abort",
+  "description": "Stream ends after visible content with no terminal event. The attempt is committed but unfinished; cancellation propagates and billing stays uncertain.",
+  "valid": true,
+  "firstCommitSeq": 0,
+  "events": [{ "attempt": "att_fixture005", "seq": 0, "kind": "text", "delta": "Partial answer" }]
+}

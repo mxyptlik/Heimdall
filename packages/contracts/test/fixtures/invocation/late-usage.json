@@ -1,0 +1,16 @@
+{
+  "name": "late-usage",
+  "description": "Usage arrives after the finish event. Reconciliation observes it; the finish stays terminal and counts stay exact.",
+  "valid": true,
+  "firstCommitSeq": 0,
+  "events": [
+    { "attempt": "att_fixture003", "seq": 0, "kind": "text", "delta": "Done." },
+    { "attempt": "att_fixture003", "seq": 1, "kind": "finish", "reason": "completed" },
+    {
+      "attempt": "att_fixture003",
+      "seq": 2,
+      "kind": "usage",
+      "usage": { "inputTokens": 60, "cachedInputTokens": 10, "outputTokens": 8 }
+    }
+  ]
+}

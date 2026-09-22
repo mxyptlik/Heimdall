@@ -5,6 +5,7 @@
 // never from request body content. Quotas, secrets, and admin publication
 // belong to T022; persistence belongs to T020.
 import {
+  compareDecimals,
   makeError,
   type EffectivePolicy,
   type EgressRule,
@@ -47,23 +48,12 @@ function conflict(message: string): ResolveResult {
   return { ok: false, error: makeError('POLICY_DENIED', message) };
 }
 
-/** Parse an exact decimal string to integer nanos (10^-9). Undefined on malformed input. */
-function parseNanos(amount: string): bigint | undefined {
-  const m = /^(-?)(\d{1,18})(?:\.(\d{1,9}))?$/.exec(amount);
-  if (!m) return undefined;
-  const [, sign, int, frac = ''] = m;
-  if (int === undefined) return undefined;
-  const scaled = BigInt(int) * 1_000_000_000n + BigInt((frac + '000000000').slice(0, 9));
-  return sign === '-' ? -scaled : scaled;
-}
-
 /** True when `a` charges no more than `b`. Cross-currency amounts are incomparable. */
 function moneyLessOrEqual(a: Money, b: Money): boolean | undefined {
   if (a.currency !== b.currency) return undefined;
-  const na = parseNanos(a.amount);
-  const nb = parseNanos(b.amount);
-  if (na === undefined || nb === undefined) return undefined;
-  return na <= nb;
+  const comparison = compareDecimals(a.amount, b.amount);
+  if (comparison === undefined) return undefined;
+  return comparison <= 0;
 }
 
 function isSubset(candidate: readonly string[], allowed: readonly string[]): boolean {
@@ -125,9 +115,8 @@ function applyOverride(
     if (override.quality.reference !== rule.quality.reference) {
       return `${level} quality reference changes the baseline under comparison`;
     }
-    const currentMax = parseNanos(override.quality.maxRegression);
-    const baseMax = parseNanos(rule.quality.maxRegression);
-    if (currentMax === undefined || baseMax === undefined || currentMax > baseMax) {
+    const regression = compareDecimals(override.quality.maxRegression, rule.quality.maxRegression);
+    if (regression === undefined || regression === 1) {
       return `${level} quality regression tolerance widens platform rule`;
     }
     rule.quality = { ...override.quality };
@@ -146,9 +135,11 @@ function applyOverride(
     rule.latency = { ...override.latency };
   }
   if (override.reliability !== undefined) {
-    const next = parseNanos(override.reliability.minSuccessRate);
-    const base = parseNanos(rule.reliability.minSuccessRate);
-    if (next === undefined || base === undefined || next < base) {
+    const floor = compareDecimals(
+      override.reliability.minSuccessRate,
+      rule.reliability.minSuccessRate,
+    );
+    if (floor === undefined || floor === -1) {
       return `${level} reliability floor lowers the platform rule`;
     }
     rule.reliability = { ...override.reliability };

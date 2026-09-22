@@ -1,0 +1,7 @@
+{
+  "name": "empty-finish",
+  "description": "Attempt ends with no content and no usage. Nothing commits; completion metadata still closes the attempt.",
+  "valid": true,
+  "firstCommitSeq": null,
+  "events": [{ "attempt": "att_fixture002", "seq": 0, "kind": "finish", "reason": "completed" }]
+}

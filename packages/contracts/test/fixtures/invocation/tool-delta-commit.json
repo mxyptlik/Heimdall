@@ -1,0 +1,31 @@
+{
+  "name": "tool-delta-commit",
+  "description": "A partial tool-call argument fragment commits the attempt on its own. Recovery must never splice another model after it.",
+  "valid": true,
+  "firstCommitSeq": 0,
+  "events": [
+    {
+      "attempt": "att_fixture007",
+      "seq": 0,
+      "kind": "tool_call",
+      "callId": "call-9",
+      "name": "search",
+      "argumentsFragment": "{\"par"
+    },
+    {
+      "attempt": "att_fixture007",
+      "seq": 1,
+      "kind": "tool_call",
+      "callId": "call-9",
+      "name": "search",
+      "argumentsFragment": "tial\":1}"
+    },
+    {
+      "attempt": "att_fixture007",
+      "seq": 2,
+      "kind": "finish",
+      "reason": "completed",
+      "usage": { "inputTokens": 40, "outputTokens": 12 }
+    }
+  ]
+}

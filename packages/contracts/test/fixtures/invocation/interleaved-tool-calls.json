@@ -1,0 +1,40 @@
+{
+  "name": "interleaved-tool-calls",
+  "description": "Text, two interleaved tool calls with fragmented arguments, then finish with usage. First commit is the opening text delta.",
+  "valid": true,
+  "firstCommitSeq": 0,
+  "events": [
+    { "attempt": "att_fixture001", "seq": 0, "kind": "text", "delta": "Working on it. " },
+    {
+      "attempt": "att_fixture001",
+      "seq": 1,
+      "kind": "tool_call",
+      "callId": "call-1",
+      "name": "search",
+      "argumentsFragment": "{\"q\":\"login bug\"}"
+    },
+    {
+      "attempt": "att_fixture001",
+      "seq": 2,
+      "kind": "tool_call",
+      "callId": "call-2",
+      "name": "lookup",
+      "argumentsFragment": "{\"id\":"
+    },
+    {
+      "attempt": "att_fixture001",
+      "seq": 3,
+      "kind": "tool_call",
+      "callId": "call-2",
+      "name": "lookup",
+      "argumentsFragment": "\"7\"}"
+    },
+    {
+      "attempt": "att_fixture001",
+      "seq": 4,
+      "kind": "finish",
+      "reason": "completed",
+      "usage": { "inputTokens": 120, "outputTokens": 45 }
+    }
+  ]
+}

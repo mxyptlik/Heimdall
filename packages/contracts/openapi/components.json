@@ -1,6 +1,28 @@
 {
   "components": {
     "schemas": {
+      "actualModel": {
+        "additionalProperties": false,
+        "description": "Provider-reported model identity for one attempt. A mismatch with the requested candidate is a protocol/policy failure, never a silent relabel.",
+        "properties": {
+          "model": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/providerFamily"
+          },
+          "revision": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": ["provider", "model"],
+        "title": "ActualModel",
+        "type": "object"
+      },
       "applicationProfile": {
         "description": "Required caller application profile. Coding agents retain models per task; chat and RAG route per invocation.",
         "enum": ["coding-agent", "chat", "rag"],
@@ -121,6 +143,33 @@
           "fixture"
         ],
         "title": "CandidateProfile",
+        "type": "object"
+      },
+      "capabilityResolution": {
+        "additionalProperties": false,
+        "description": "Candidate capability snapshot consumed by invocation-time rechecks. Produced from catalog data; storage and publication belong to later tasks.",
+        "properties": {
+          "candidate": {
+            "$ref": "#/components/schemas/candidateId"
+          },
+          "capacity": {
+            "$ref": "#/components/schemas/safeCapacity"
+          },
+          "modalities": {
+            "$ref": "#/components/schemas/modalitySupport"
+          },
+          "policyVersion": {
+            "$ref": "#/components/schemas/policyVersion"
+          },
+          "revision": {
+            "$ref": "#/components/schemas/revisionId"
+          },
+          "tools": {
+            "$ref": "#/components/schemas/toolSupport"
+          }
+        },
+        "required": ["candidate", "revision", "modalities", "tools", "capacity", "policyVersion"],
+        "title": "CapabilityResolution",
         "type": "object"
       },
       "capabilityState": {
@@ -341,6 +390,27 @@
         "title": "ErrorCode",
         "type": "string"
       },
+      "errorEvent": {
+        "additionalProperties": false,
+        "description": "Terminal failure event carrying the typed envelope with retryability and execution certainty.",
+        "properties": {
+          "attempt": {
+            "$ref": "#/components/schemas/attemptId"
+          },
+          "error": {
+            "$ref": "#/components/schemas/heimdallError"
+          },
+          "kind": {
+            "const": "error"
+          },
+          "seq": {
+            "$ref": "#/components/schemas/seqNumber"
+          }
+        },
+        "required": ["attempt", "seq", "kind", "error"],
+        "title": "ErrorEvent",
+        "type": "object"
+      },
       "evidenceKind": {
         "description": "Provenance class of a profile claim. Fixture evidence is synthetic and barred from production.",
         "enum": ["declared", "measured", "fixture"],
@@ -420,6 +490,36 @@
         "required": ["type", "source"],
         "title": "FileBlock",
         "type": "object"
+      },
+      "finishEvent": {
+        "additionalProperties": false,
+        "description": "Terminal attempt event. Exactly one terminal event (finish or error) closes an attempt; nothing follows it except late usage reconciliation.",
+        "properties": {
+          "attempt": {
+            "$ref": "#/components/schemas/attemptId"
+          },
+          "kind": {
+            "const": "finish"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/finishReason"
+          },
+          "seq": {
+            "$ref": "#/components/schemas/seqNumber"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/usageRecord"
+          }
+        },
+        "required": ["attempt", "seq", "kind", "reason"],
+        "title": "FinishEvent",
+        "type": "object"
+      },
+      "finishReason": {
+        "description": "Terminal attempt outcome. Usage may arrive with or after the finish event; late usage is reconciled, never fabricated.",
+        "enum": ["completed", "truncated", "filtered", "error", "cancelled", "budget_exceeded"],
+        "title": "FinishReason",
+        "type": "string"
       },
       "fraction": {
         "description": "Exact decimal fraction between 0 and 1 inclusive.",
@@ -843,6 +943,29 @@
         "title": "ReasonCode",
         "type": "string"
       },
+      "reasoningDelta": {
+        "additionalProperties": false,
+        "description": "Reasoning-trace fragment. A commit event like any other visible content.",
+        "properties": {
+          "attempt": {
+            "$ref": "#/components/schemas/attemptId"
+          },
+          "delta": {
+            "maxLength": 65536,
+            "minLength": 1,
+            "type": "string"
+          },
+          "kind": {
+            "const": "reasoning"
+          },
+          "seq": {
+            "$ref": "#/components/schemas/seqNumber"
+          }
+        },
+        "required": ["attempt", "seq", "kind", "delta"],
+        "title": "ReasoningDelta",
+        "type": "object"
+      },
       "reevaluationReason": {
         "description": "Typed caller reason for mid-task model reevaluation.",
         "enum": [
@@ -904,6 +1027,23 @@
         },
         "required": ["minSuccessRate"],
         "title": "ReliabilityFloor",
+        "type": "object"
+      },
+      "replayInfo": {
+        "additionalProperties": false,
+        "description": "Result-replay metadata for duplicate-request recovery. Replay applies to metadata; response content replays only with explicit transient retention.",
+        "properties": {
+          "providerRequestId": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "replayable": {
+            "type": "boolean"
+          }
+        },
+        "required": ["replayable"],
+        "title": "ReplayInfo",
         "type": "object"
       },
       "requestId": {
@@ -1118,11 +1258,42 @@
         "title": "SafeCapacity",
         "type": "object"
       },
+      "seqNumber": {
+        "description": "Non-negative per-attempt event ordinal. Ordering within one attempt is significant.",
+        "maximum": 9007199254740991,
+        "minimum": 0,
+        "title": "SeqNumber",
+        "type": "integer"
+      },
       "sideEffectClass": {
         "description": "Declared side-effect class. Selection may consider it; execution authorization stays with the caller, and Heimdall never executes tools.",
         "enum": ["read", "write", "external"],
         "title": "SideEffectClass",
         "type": "string"
+      },
+      "streamEvent": {
+        "description": "One normalized provider-neutral stream event. Parser buffers, argument size, and event counts are bounded by the stated limits.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/textDelta"
+          },
+          {
+            "$ref": "#/components/schemas/reasoningDelta"
+          },
+          {
+            "$ref": "#/components/schemas/toolCallDelta"
+          },
+          {
+            "$ref": "#/components/schemas/usageEvent"
+          },
+          {
+            "$ref": "#/components/schemas/finishEvent"
+          },
+          {
+            "$ref": "#/components/schemas/errorEvent"
+          }
+        ],
+        "title": "StreamEvent"
       },
       "tenantId": {
         "description": "Authenticated tenant identifier. Resolved from authentication context, never from a request body field.",
@@ -1148,6 +1319,29 @@
         "title": "TextBlock",
         "type": "object"
       },
+      "textDelta": {
+        "additionalProperties": false,
+        "description": "Assistant text fragment. Any text delta is a commit event: no model switch after it is emitted.",
+        "properties": {
+          "attempt": {
+            "$ref": "#/components/schemas/attemptId"
+          },
+          "delta": {
+            "maxLength": 65536,
+            "minLength": 1,
+            "type": "string"
+          },
+          "kind": {
+            "const": "text"
+          },
+          "seq": {
+            "$ref": "#/components/schemas/seqNumber"
+          }
+        },
+        "required": ["attempt", "seq", "kind", "delta"],
+        "title": "TextDelta",
+        "type": "object"
+      },
       "timestamp": {
         "description": "RFC3339 date-time string with bounded length. The pattern checks field ranges (month, day, hour, minute, second, offset); impossible calendar dates such as February 30 pass the shape check and are a consumer concern.",
         "maxLength": 64,
@@ -1161,6 +1355,36 @@
         "minimum": 0,
         "title": "TokenCount",
         "type": "integer"
+      },
+      "toolCallDelta": {
+        "additionalProperties": false,
+        "description": "Raw tool-call argument fragment, possibly partial. Every tool-call delta is a commit event, including fragments.",
+        "properties": {
+          "argumentsFragment": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "attempt": {
+            "$ref": "#/components/schemas/attemptId"
+          },
+          "callId": {
+            "maxLength": 128,
+            "pattern": "^[\\w.-]{1,128}$",
+            "type": "string"
+          },
+          "kind": {
+            "const": "tool_call"
+          },
+          "name": {
+            "$ref": "#/components/schemas/toolId"
+          },
+          "seq": {
+            "$ref": "#/components/schemas/seqNumber"
+          }
+        },
+        "required": ["attempt", "seq", "kind", "callId", "argumentsFragment"],
+        "title": "ToolCallDelta",
+        "type": "object"
       },
       "toolDefinition": {
         "additionalProperties": false,
@@ -1284,6 +1508,51 @@
         },
         "required": ["url"],
         "title": "UrlSource",
+        "type": "object"
+      },
+      "usageEvent": {
+        "additionalProperties": false,
+        "description": "Provider usage report. May arrive late, including after the finish event.",
+        "properties": {
+          "attempt": {
+            "$ref": "#/components/schemas/attemptId"
+          },
+          "kind": {
+            "const": "usage"
+          },
+          "seq": {
+            "$ref": "#/components/schemas/seqNumber"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/usageRecord"
+          }
+        },
+        "required": ["attempt", "seq", "kind", "usage"],
+        "title": "UsageEvent",
+        "type": "object"
+      },
+      "usageRecord": {
+        "additionalProperties": false,
+        "description": "Exact token accounting for one attempt. Missing provider values stay absent; reconciliation never invents them.",
+        "properties": {
+          "cachedInputTokens": {
+            "$ref": "#/components/schemas/tokenCount"
+          },
+          "inputTokens": {
+            "$ref": "#/components/schemas/tokenCount"
+          },
+          "outputTokens": {
+            "$ref": "#/components/schemas/tokenCount"
+          },
+          "reasoningTokens": {
+            "$ref": "#/components/schemas/tokenCount"
+          },
+          "requestCharges": {
+            "$ref": "#/components/schemas/money"
+          }
+        },
+        "required": ["inputTokens", "outputTokens"],
+        "title": "UsageRecord",
         "type": "object"
       },
       "videoBlock": {

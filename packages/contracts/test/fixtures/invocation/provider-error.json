@@ -1,0 +1,19 @@
+{
+  "name": "provider-error",
+  "description": "Pre-commit provider failure with retryability and execution certainty. Nothing commits; recovery may proceed on another attempt.",
+  "valid": true,
+  "firstCommitSeq": null,
+  "events": [
+    {
+      "attempt": "att_fixture006",
+      "seq": 0,
+      "kind": "error",
+      "error": {
+        "code": "PROVIDER_UNAVAILABLE",
+        "message": "upstream timeout",
+        "retryable": true,
+        "certainty": "possibly_started"
+      }
+    }
+  ]
+}

@@ -1371,5 +1371,285 @@ export const ROOT_SCHEMA: SchemaObject = {
       ],
       additionalProperties: false,
     },
+    seqNumber: {
+      title: 'SeqNumber',
+      description:
+        'Non-negative per-attempt event ordinal. Ordering within one attempt is significant.',
+      type: 'integer',
+      minimum: 0,
+      maximum: 9007199254740991,
+    },
+    finishReason: {
+      title: 'FinishReason',
+      description:
+        'Terminal attempt outcome. Usage may arrive with or after the finish event; late usage is reconciled, never fabricated.',
+      type: 'string',
+      enum: ['completed', 'truncated', 'filtered', 'error', 'cancelled', 'budget_exceeded'],
+    },
+    usageRecord: {
+      title: 'UsageRecord',
+      description:
+        'Exact token accounting for one attempt. Missing provider values stay absent; reconciliation never invents them.',
+      type: 'object',
+      properties: {
+        inputTokens: {
+          $ref: '#/$defs/tokenCount',
+        },
+        cachedInputTokens: {
+          $ref: '#/$defs/tokenCount',
+        },
+        outputTokens: {
+          $ref: '#/$defs/tokenCount',
+        },
+        reasoningTokens: {
+          $ref: '#/$defs/tokenCount',
+        },
+        requestCharges: {
+          $ref: '#/$defs/money',
+        },
+      },
+      required: ['inputTokens', 'outputTokens'],
+      additionalProperties: false,
+    },
+    actualModel: {
+      title: 'ActualModel',
+      description:
+        'Provider-reported model identity for one attempt. A mismatch with the requested candidate is a protocol/policy failure, never a silent relabel.',
+      type: 'object',
+      properties: {
+        provider: {
+          $ref: '#/$defs/providerFamily',
+        },
+        model: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 256,
+        },
+        revision: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 256,
+        },
+      },
+      required: ['provider', 'model'],
+      additionalProperties: false,
+    },
+    replayInfo: {
+      title: 'ReplayInfo',
+      description:
+        'Result-replay metadata for duplicate-request recovery. Replay applies to metadata; response content replays only with explicit transient retention.',
+      type: 'object',
+      properties: {
+        replayable: {
+          type: 'boolean',
+        },
+        providerRequestId: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 256,
+        },
+      },
+      required: ['replayable'],
+      additionalProperties: false,
+    },
+    capabilityResolution: {
+      title: 'CapabilityResolution',
+      description:
+        'Candidate capability snapshot consumed by invocation-time rechecks. Produced from catalog data; storage and publication belong to later tasks.',
+      type: 'object',
+      properties: {
+        candidate: {
+          $ref: '#/$defs/candidateId',
+        },
+        revision: {
+          $ref: '#/$defs/revisionId',
+        },
+        modalities: {
+          $ref: '#/$defs/modalitySupport',
+        },
+        tools: {
+          $ref: '#/$defs/toolSupport',
+        },
+        capacity: {
+          $ref: '#/$defs/safeCapacity',
+        },
+        policyVersion: {
+          $ref: '#/$defs/policyVersion',
+        },
+      },
+      required: ['candidate', 'revision', 'modalities', 'tools', 'capacity', 'policyVersion'],
+      additionalProperties: false,
+    },
+    textDelta: {
+      title: 'TextDelta',
+      description:
+        'Assistant text fragment. Any text delta is a commit event: no model switch after it is emitted.',
+      type: 'object',
+      properties: {
+        attempt: {
+          $ref: '#/$defs/attemptId',
+        },
+        seq: {
+          $ref: '#/$defs/seqNumber',
+        },
+        kind: {
+          const: 'text',
+        },
+        delta: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 65536,
+        },
+      },
+      required: ['attempt', 'seq', 'kind', 'delta'],
+      additionalProperties: false,
+    },
+    reasoningDelta: {
+      title: 'ReasoningDelta',
+      description: 'Reasoning-trace fragment. A commit event like any other visible content.',
+      type: 'object',
+      properties: {
+        attempt: {
+          $ref: '#/$defs/attemptId',
+        },
+        seq: {
+          $ref: '#/$defs/seqNumber',
+        },
+        kind: {
+          const: 'reasoning',
+        },
+        delta: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 65536,
+        },
+      },
+      required: ['attempt', 'seq', 'kind', 'delta'],
+      additionalProperties: false,
+    },
+    toolCallDelta: {
+      title: 'ToolCallDelta',
+      description:
+        'Raw tool-call argument fragment, possibly partial. Every tool-call delta is a commit event, including fragments.',
+      type: 'object',
+      properties: {
+        attempt: {
+          $ref: '#/$defs/attemptId',
+        },
+        seq: {
+          $ref: '#/$defs/seqNumber',
+        },
+        kind: {
+          const: 'tool_call',
+        },
+        callId: {
+          type: 'string',
+          pattern: '^[\\w.-]{1,128}$',
+          maxLength: 128,
+        },
+        name: {
+          $ref: '#/$defs/toolId',
+        },
+        argumentsFragment: {
+          type: 'string',
+          maxLength: 65536,
+        },
+      },
+      required: ['attempt', 'seq', 'kind', 'callId', 'argumentsFragment'],
+      additionalProperties: false,
+    },
+    usageEvent: {
+      title: 'UsageEvent',
+      description: 'Provider usage report. May arrive late, including after the finish event.',
+      type: 'object',
+      properties: {
+        attempt: {
+          $ref: '#/$defs/attemptId',
+        },
+        seq: {
+          $ref: '#/$defs/seqNumber',
+        },
+        kind: {
+          const: 'usage',
+        },
+        usage: {
+          $ref: '#/$defs/usageRecord',
+        },
+      },
+      required: ['attempt', 'seq', 'kind', 'usage'],
+      additionalProperties: false,
+    },
+    finishEvent: {
+      title: 'FinishEvent',
+      description:
+        'Terminal attempt event. Exactly one terminal event (finish or error) closes an attempt; nothing follows it except late usage reconciliation.',
+      type: 'object',
+      properties: {
+        attempt: {
+          $ref: '#/$defs/attemptId',
+        },
+        seq: {
+          $ref: '#/$defs/seqNumber',
+        },
+        kind: {
+          const: 'finish',
+        },
+        reason: {
+          $ref: '#/$defs/finishReason',
+        },
+        usage: {
+          $ref: '#/$defs/usageRecord',
+        },
+      },
+      required: ['attempt', 'seq', 'kind', 'reason'],
+      additionalProperties: false,
+    },
+    errorEvent: {
+      title: 'ErrorEvent',
+      description:
+        'Terminal failure event carrying the typed envelope with retryability and execution certainty.',
+      type: 'object',
+      properties: {
+        attempt: {
+          $ref: '#/$defs/attemptId',
+        },
+        seq: {
+          $ref: '#/$defs/seqNumber',
+        },
+        kind: {
+          const: 'error',
+        },
+        error: {
+          $ref: '#/$defs/heimdallError',
+        },
+      },
+      required: ['attempt', 'seq', 'kind', 'error'],
+      additionalProperties: false,
+    },
+    streamEvent: {
+      title: 'StreamEvent',
+      description:
+        'One normalized provider-neutral stream event. Parser buffers, argument size, and event counts are bounded by the stated limits.',
+      oneOf: [
+        {
+          $ref: '#/$defs/textDelta',
+        },
+        {
+          $ref: '#/$defs/reasoningDelta',
+        },
+        {
+          $ref: '#/$defs/toolCallDelta',
+        },
+        {
+          $ref: '#/$defs/usageEvent',
+        },
+        {
+          $ref: '#/$defs/finishEvent',
+        },
+        {
+          $ref: '#/$defs/errorEvent',
+        },
+      ],
+    },
   },
 };

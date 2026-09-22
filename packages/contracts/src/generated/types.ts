@@ -241,6 +241,39 @@ export type ReevaluationReason =
  * via the `definition` "reasonCode".
  */
 export type ReasonCode = string;
+/**
+ * Non-negative per-attempt event ordinal. Ordering within one attempt is significant.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "seqNumber".
+ */
+export type SeqNumber = number;
+/**
+ * Terminal attempt outcome. Usage may arrive with or after the finish event; late usage is reconciled, never fabricated.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "finishReason".
+ */
+export type FinishReason =
+  | 'completed'
+  | 'truncated'
+  | 'filtered'
+  | 'error'
+  | 'cancelled'
+  | 'budget_exceeded';
+/**
+ * One normalized provider-neutral stream event. Parser buffers, argument size, and event counts are bounded by the stated limits.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "streamEvent".
+ */
+export type StreamEvent =
+  | TextDelta
+  | ReasoningDelta
+  | ToolCallDelta
+  | UsageEvent
+  | FinishEvent
+  | ErrorEvent;
 
 /**
  * Single schema source for Heimdall V1 contract primitives and error vocabulary (T002). Generated TypeScript and OpenAPI components derive from this file; never edit generated output. Request/result composition belongs to later tasks (T005+).
@@ -1182,4 +1215,127 @@ export interface RouteResult {
   estimatedCost?: Money;
   routingState: RoutingState;
   retention: RetentionInfo;
+}
+/**
+ * Exact token accounting for one attempt. Missing provider values stay absent; reconciliation never invents them.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "usageRecord".
+ */
+export interface UsageRecord {
+  inputTokens: TokenCount;
+  cachedInputTokens?: TokenCount;
+  outputTokens: TokenCount;
+  reasoningTokens?: TokenCount;
+  requestCharges?: Money;
+}
+/**
+ * Provider-reported model identity for one attempt. A mismatch with the requested candidate is a protocol/policy failure, never a silent relabel.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "actualModel".
+ */
+export interface ActualModel {
+  provider: ProviderFamily;
+  model: string;
+  revision?: string;
+}
+/**
+ * Result-replay metadata for duplicate-request recovery. Replay applies to metadata; response content replays only with explicit transient retention.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "replayInfo".
+ */
+export interface ReplayInfo {
+  replayable: boolean;
+  providerRequestId?: string;
+}
+/**
+ * Candidate capability snapshot consumed by invocation-time rechecks. Produced from catalog data; storage and publication belong to later tasks.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "capabilityResolution".
+ */
+export interface CapabilityResolution {
+  candidate: CandidateId;
+  revision: RevisionId;
+  modalities: ModalitySupport;
+  tools: ToolSupport;
+  capacity: SafeCapacity;
+  policyVersion: PolicyVersion;
+}
+/**
+ * Assistant text fragment. Any text delta is a commit event: no model switch after it is emitted.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "textDelta".
+ */
+export interface TextDelta {
+  attempt: AttemptId;
+  seq: SeqNumber;
+  kind: 'text';
+  delta: string;
+}
+/**
+ * Reasoning-trace fragment. A commit event like any other visible content.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "reasoningDelta".
+ */
+export interface ReasoningDelta {
+  attempt: AttemptId;
+  seq: SeqNumber;
+  kind: 'reasoning';
+  delta: string;
+}
+/**
+ * Raw tool-call argument fragment, possibly partial. Every tool-call delta is a commit event, including fragments.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "toolCallDelta".
+ */
+export interface ToolCallDelta {
+  attempt: AttemptId;
+  seq: SeqNumber;
+  kind: 'tool_call';
+  callId: string;
+  name?: ToolId;
+  argumentsFragment: string;
+}
+/**
+ * Provider usage report. May arrive late, including after the finish event.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "usageEvent".
+ */
+export interface UsageEvent {
+  attempt: AttemptId;
+  seq: SeqNumber;
+  kind: 'usage';
+  usage: UsageRecord;
+}
+/**
+ * Terminal attempt event. Exactly one terminal event (finish or error) closes an attempt; nothing follows it except late usage reconciliation.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "finishEvent".
+ */
+export interface FinishEvent {
+  attempt: AttemptId;
+  seq: SeqNumber;
+  kind: 'finish';
+  reason: FinishReason;
+  usage?: UsageRecord;
+}
+/**
+ * Terminal failure event carrying the typed envelope with retryability and execution certainty.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "errorEvent".
+ */
+export interface ErrorEvent {
+  attempt: AttemptId;
+  seq: SeqNumber;
+  kind: 'error';
+  error: HeimdallError;
 }

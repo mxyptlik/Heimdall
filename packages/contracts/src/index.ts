@@ -6,4 +6,6 @@ export const CONTRACTS_VERSION = '0.0.0';
 export * from './errors.js';
 export * from './validate.js';
 export * from './canonical.js';
+export * from './stream.js';
+export * from './decimal.js';
 export * from './generated/types.js';
