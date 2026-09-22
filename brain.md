@@ -13,11 +13,11 @@ The latest explicit user decision wins over an older recommendation. Do not sile
 
 ## Current checkpoint
 
-- Phase: T013+T014 complete; continuity reducer and tool selection committed.
-- Heimdall application code: workspace through cost math (T001–T006, T008, T010, T011) + continuity and tool selection (T013/T014). No ranking/routing/invocation logic yet.
-- Mandatory implementation work: T001–T006, T008, T010, T011, T013, T014 DONE; all others TODO. Optional later work: T054 and T055, both TODO and disabled by default.
-- Next READY tasks: T007 needs T002+T005+T006 — READY. T009 needs T002 — READY. T012 needs T006+T011 — READY. T015 needs T010+T011+T013+T014 — READY now (all DONE). T017 needs T006 — READY. T018 needs T008 — READY. T016 needs T015 — blocked on T015. Dependency-ready now: T007, T009, T012, T015, T017, T018.
-- Active implementation owner/task: none (T013+T014 closed 2026-09-22).
+- Phase: T012+T015 complete; budget ledger and candidate ranking committed.
+- Heimdall application code: pure domain through ranking (T001–T006, T008, T010–T015). No routing composition, persistence, transport, or SDK yet.
+- Mandatory implementation work: T001–T006, T008, T010–T015 DONE; all others TODO. Optional later work: T054 and T055, both TODO and disabled by default.
+- Next READY tasks: T007 needs T002+T005+T006 — READY. T009 needs T002 — READY. T016 needs T015 — READY now (T015 DONE). T017 needs T006 — READY. T018 needs T008 — READY. T020 needs T003+T004+T006+T012 — READY now (all DONE; requires a PostgreSQL instance — verify availability first). T019 needs T016+T017+T018 — blocked on T016/T017/T018. T023 needs T020+T012+T006 — blocked on T020. Dependency-ready now: T007, T009, T016, T017, T018, T020.
+- Active implementation owner/task: none (T012+T015 closed 2026-09-22).
 - Existing upstream reference: `deepseek-harness/`, initially pinned to `ddefc45`; verify current HEAD and working tree before connector work.
 - Open setup blockers: none for keyless scaffolding. Paid evaluation, exact candidate choice, release license and credentials are handled by their explicit future tasks.
 - Current web-server uptime is unknown. A successful launch was observed during setup; do not assume it is still running after a restart or new session.
@@ -151,6 +151,21 @@ Limitations / untested paths:
 - Scope preserved: Jev adapter (T025), state projector implementation (T026), calibration/thresholds (T042), task-level fitting (T044), budget ledger mechanics (T012).
 - Limitations / untested paths: no live Jev calls (keyless port spec only); no HTTP transport test (T029+); Windows host only.
 
+### V-20260922-09 — T012 budget ledger + T015 ranking
+
+- Task(s): T012, T015 (parallel work packages, distinct file ownership).
+- Source revision / working-tree state: Heimdall commit `e4507f2` (on top of `3c7e57b`); `deepseek-harness/` at `ddefc45`, clean, untouched.
+- Commands and working directory (`C:\Users\User\Desktop\Heimdall`, via `pnpm.cmd`):
+  - `pnpm.cmd test` (workspace) — exit 0; 18 files, 163 tests (9 budget-ledger incl. 200-iteration property, 10 ranking, rest pre-existing).
+  - `pnpm.cmd typecheck` (root), gateway and contracts `typecheck` — exit 0.
+  - `pnpm.cmd lint`, `pnpm.cmd boundaries` (28 source files) — exit 0.
+  - Secret sweep across new domain code — no matches.
+- Artifact paths: `apps/gateway/src/modules/invocation/domain/budget.ts`; `apps/gateway/src/modules/selection/domain/ranking.ts`; `apps/gateway/test/budget-ledger.test.ts`; `apps/gateway/test/ranking.test.ts`; `nanosToDecimalString` promoted to contracts `decimal.ts` with both domain modules consolidated onto it (cost test import updated).
+- Fixes during verification: `selection/public.ts` rewrite lost in a batched write (verified-then-rewrote serially — process note: one file per message for related writes); cost-test import pointed at the moved formatter; budget expectations corrected to normalized decimal forms (`'4'` not `'4.00'`, same normalization documented in T011); strict-null/test-type errors fixed without casts.
+- Engineering choices (within accepted design, no product change): fungible reservation pool with per-settlement validation (per-attempt tracking deferred to T023); settlement below reservation frees the difference (accounting, not a reset); uncertain outcomes retain the FULL reservation; overrun diagnosis separates provider_uncertainty from accounting_anomaly; strict-cap mode refused without enforceable bounds on every charge category; ranking consumes T010 verdicts with ineligible never ranking; unpriced certified candidates sort after priced ones; retention breaks ties only, with mid-task switches requiring proven savings ≥ `minSavingsToSwitch` (C5/C7/H8 interpretation); compound uses best conservative evidence then same-currency cost; sparse evidence uses the eligible baseline or fails INSUFFICIENT_EVIDENCE (zero eligible → NO_ELIGIBLE_MODEL).
+- Scope preserved: durable claims/leases/crash recovery (T023), numeric confidence-bound methods (T044), relevance calibration (T043).
+- Limitations / untested paths: ledger is pure/in-process — no PostgreSQL concurrency proof (T023); no HTTP transport test (T029+); Windows host only.
+
 ### V-20260922-08 — T013 continuity reducer + T014 tool selection
 
 - Task(s): T013, T014 (parallel work packages, distinct file ownership).
@@ -212,6 +227,32 @@ Verification record IDs: V-20260922-02
 Remaining limitations: no runtime behavior yet; CI file unexecuted remotely; Linux host check deferred to T049
 Decision changes: routine engineering choices only (TS 5.9.3 pin; prettier lint scoped to owned trees) — no product decision changed
 Next READY tasks: T002
+```
+
+```text
+Task ID / title: T012 — Budget reservation state machine
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: T011 DONE, T006 DONE
+Files / commit: commit e4507f2 (shared with T015; distinct files: invocation/domain/budget.ts + budget-ledger.test.ts)
+Behavior delivered: pure ledger (estimated/reserved/confirmed/uncertain, hard caps gate, soft targets informational, classifier cost included); exact-fit admission, retry-safe pool, uncertain retention, over-settlement rejection, overrun diagnosis, strict-cap support gate; 9 tests incl. 200-iteration admission property
+Verification record IDs: V-20260922-09
+Remaining limitations: pure transitions only (durable claims/leases/crash in T023)
+Decision changes: routine engineering choices only (listed in V-20260922-09) — no product decision changed
+Next READY tasks: T007, T009, T016, T017, T018, T020
+```
+
+```text
+Task ID / title: T015 — Ranking, floors, and fallback order
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: T010 DONE, T011 DONE, T013 DONE, T014 DONE
+Files / commit: commit e4507f2 (shared with T012; distinct files: selection/domain/ranking.ts + ranking.test.ts)
+Behavior delivered: deterministic total-order ranking (priced first, cost, retention ties, reliability, stable ID); ineligible never ranks; pins honored; compound evidence-first; baseline-or-explicit-failure sparse rule; meaningful-savings switch bar; full reason traces with fallbacks; 10 tests
+Verification record IDs: V-20260922-09
+Remaining limitations: numeric confidence-bound methods deferred to T044; measurement join deferred to T021/T027
+Decision changes: routine engineering choices only (listed in V-20260922-09) — no product decision changed
+Next READY tasks: T007, T009, T016, T017, T018, T020
 ```
 
 ```text

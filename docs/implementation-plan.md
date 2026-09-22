@@ -144,7 +144,7 @@ Milestones: M0 contracts/fixtures and DSH feasibility; M1 keyless deterministic 
 **Acceptance/evidence:** Hand-calculated fixtures pass across unit scales and effective-date changes; reasoning is not double-counted; failed-attempt spend is included; missing prices cannot rank as zero; cache hit assumptions never reduce hard-cap reservations without proof.
 
 ### T012 — Budget reservation state machine
-- [ ] Status: TODO
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `e4507f2`)
 **Depends on:** T011, T006.
 **Owns:** pure budget transitions and ledger invariants.
 **Work:** Define estimated/reserved/confirmed/uncertain spend, hard caps versus soft targets, classifier cost inclusion, release/reconcile rules, and aggregate attempt budget. Provider cancellation does not erase possibly charged usage. Strict cap eligibility requires enforceable bounds; reject unsupported exact guarantees.
@@ -165,7 +165,7 @@ Milestones: M0 contracts/fixtures and DSH feasibility; M1 keyless deterministic 
 **Acceptance/evidence:** Never expose an unauthorized tool; enabled selection can return none; disabled selection preserves explicit authorized tools; required definitions that cannot fit fail visibly; adversarial descriptions cannot grant permissions.
 
 ### T015 — Ranking, floors, and fallback order
-- [ ] Status: TODO
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `e4507f2`)
 **Depends on:** T010, T011, T013, T014.
 **Owns:** deterministic candidate ranking and reason trace.
 **Work:** Apply quality/reliability/latency confidence bounds, choose lowest expected total cost among survivors, honor retention/pins and compound-request rules. Establish stable tie breaks and fallback list with exclusion reasons. Insufficient evidence chooses only a configured eligible baseline or explicit failure.
