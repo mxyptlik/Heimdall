@@ -1,3 +1,7 @@
-// Shared wire-contract leaf (T001 scaffold). Real schemas land in T002.
-// This package must not import server, SDK, or connector code.
+// Contract primitives (T002 scaffold entrypoint). Request/result composition
+// belongs to T005+; this package currently owns primitives, modality blocks,
+// the typed error vocabulary, and the version policy (see VERSIONING.md).
 export const CONTRACTS_VERSION = '0.0.0';
+
+export * from './errors.js';
+export * from './validate.js';

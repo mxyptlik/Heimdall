@@ -1,0 +1,375 @@
+{
+  "components": {
+    "schemas": {
+      "applicationProfile": {
+        "description": "Required caller application profile. Coding agents retain models per task; chat and RAG route per invocation.",
+        "enum": ["coding-agent", "chat", "rag"],
+        "title": "ApplicationProfile",
+        "type": "string"
+      },
+      "attemptId": {
+        "description": "Identifier for one model invocation attempt within a decision.",
+        "maxLength": 100,
+        "pattern": "^att_[A-Za-z0-9_-]{8,96}$",
+        "title": "AttemptId",
+        "type": "string"
+      },
+      "audioBlock": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 200000,
+            "type": "string"
+          },
+          "mimeType": {
+            "$ref": "#/components/schemas/mimeType"
+          },
+          "source": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/urlSource"
+              },
+              {
+                "$ref": "#/components/schemas/refSource"
+              }
+            ]
+          },
+          "type": {
+            "const": "audio"
+          }
+        },
+        "required": ["type", "source"],
+        "title": "AudioBlock",
+        "type": "object"
+      },
+      "contentBlock": {
+        "description": "Any single content block across all declared modalities.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/textBlock"
+          },
+          {
+            "$ref": "#/components/schemas/imageBlock"
+          },
+          {
+            "$ref": "#/components/schemas/audioBlock"
+          },
+          {
+            "$ref": "#/components/schemas/videoBlock"
+          },
+          {
+            "$ref": "#/components/schemas/fileBlock"
+          },
+          {
+            "$ref": "#/components/schemas/mixedBlock"
+          }
+        ],
+        "title": "ContentBlock"
+      },
+      "currency": {
+        "description": "Three-letter uppercase currency code (ISO-4217-shaped). A full allowlist is deferred to real price ingestion (T032).",
+        "pattern": "^[A-Z]{3}$",
+        "title": "Currency",
+        "type": "string"
+      },
+      "decimalAmount": {
+        "description": "Exact decimal money string. Binary floats are never used for billing arithmetic.",
+        "maxLength": 32,
+        "pattern": "^-?\\d{1,18}(\\.\\d{1,9})?$",
+        "title": "DecimalAmount",
+        "type": "string"
+      },
+      "decisionId": {
+        "description": "Identifier for one routing decision, not a task.",
+        "maxLength": 100,
+        "pattern": "^dec_[A-Za-z0-9_-]{8,96}$",
+        "title": "DecisionId",
+        "type": "string"
+      },
+      "durationMs": {
+        "description": "Non-negative duration in whole milliseconds.",
+        "maximum": 9007199254740991,
+        "minimum": 0,
+        "title": "DurationMs",
+        "type": "integer"
+      },
+      "errorCode": {
+        "description": "Typed gateway error vocabulary. Unknown codes fail validation by design; consumers handle them by upgrading, not guessing.",
+        "enum": [
+          "INVALID_REQUEST",
+          "POLICY_DENIED",
+          "UNSUPPORTED_OPTION",
+          "NO_ELIGIBLE_MODEL",
+          "INSUFFICIENT_EVIDENCE",
+          "ESSENTIAL_TOOLS_DO_NOT_FIT",
+          "CLASSIFIER_UNAVAILABLE",
+          "CATALOG_STALE",
+          "CONTEXT_OVERFLOW",
+          "BUDGET_EXCEEDED",
+          "DEADLINE_EXCEEDED",
+          "PROVIDER_UNAVAILABLE",
+          "PROVIDER_PROTOCOL_ERROR",
+          "STREAM_INTERRUPTED",
+          "STALE_PREPARED_ROUTE",
+          "IDEMPOTENCY_CONFLICT",
+          "CANCELLED"
+        ],
+        "title": "ErrorCode",
+        "type": "string"
+      },
+      "executionCertainty": {
+        "description": "How certain Heimdall is that a billable provider call executed. A lost connection never proves zero cost.",
+        "enum": ["not_started", "possibly_started", "started", "completed"],
+        "title": "ExecutionCertainty",
+        "type": "string"
+      },
+      "extensions": {
+        "additionalProperties": false,
+        "description": "Reserved forward-compatibility object. No keys are allowed in v1; each future key is an additive minor version change. Unknown keys are rejected, never silently dropped.",
+        "maxProperties": 8,
+        "properties": {},
+        "title": "Extensions",
+        "type": "object"
+      },
+      "fileBlock": {
+        "additionalProperties": false,
+        "description": "File/document requirement (text, PDF, archive, or other opaque document).",
+        "properties": {
+          "description": {
+            "maxLength": 200000,
+            "type": "string"
+          },
+          "mimeType": {
+            "$ref": "#/components/schemas/mimeType"
+          },
+          "source": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/urlSource"
+              },
+              {
+                "$ref": "#/components/schemas/refSource"
+              }
+            ]
+          },
+          "type": {
+            "const": "file"
+          }
+        },
+        "required": ["type", "source"],
+        "title": "FileBlock",
+        "type": "object"
+      },
+      "heimdallError": {
+        "additionalProperties": false,
+        "description": "Typed error envelope. Certainty is per-occurrence, never inferred from the code alone.",
+        "properties": {
+          "attemptId": {
+            "$ref": "#/components/schemas/attemptId"
+          },
+          "certainty": {
+            "$ref": "#/components/schemas/executionCertainty"
+          },
+          "code": {
+            "$ref": "#/components/schemas/errorCode"
+          },
+          "decisionId": {
+            "$ref": "#/components/schemas/decisionId"
+          },
+          "extensions": {
+            "$ref": "#/components/schemas/extensions"
+          },
+          "message": {
+            "maxLength": 1024,
+            "minLength": 1,
+            "type": "string"
+          },
+          "requestId": {
+            "$ref": "#/components/schemas/requestId"
+          },
+          "retryable": {
+            "type": "boolean"
+          }
+        },
+        "required": ["code", "message", "retryable"],
+        "title": "HeimdallError",
+        "type": "object"
+      },
+      "imageBlock": {
+        "additionalProperties": false,
+        "description": "Image requirement. A description never erases the hard requirement to support the image itself.",
+        "properties": {
+          "description": {
+            "maxLength": 200000,
+            "type": "string"
+          },
+          "mimeType": {
+            "$ref": "#/components/schemas/mimeType"
+          },
+          "source": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/urlSource"
+              },
+              {
+                "$ref": "#/components/schemas/refSource"
+              }
+            ]
+          },
+          "type": {
+            "const": "image"
+          }
+        },
+        "required": ["type", "source"],
+        "title": "ImageBlock",
+        "type": "object"
+      },
+      "mimeType": {
+        "maxLength": 128,
+        "pattern": "^[a-z]+/[a-z0-9.+-]+$",
+        "title": "MimeType",
+        "type": "string"
+      },
+      "mixedBlock": {
+        "additionalProperties": false,
+        "description": "Bounded mixed-modality content. Depth beyond nesting limits is rejected.",
+        "properties": {
+          "parts": {
+            "items": {
+              "$ref": "#/components/schemas/contentBlock"
+            },
+            "maxItems": 64,
+            "minItems": 1,
+            "type": "array"
+          },
+          "type": {
+            "const": "mixed"
+          }
+        },
+        "required": ["type", "parts"],
+        "title": "MixedBlock",
+        "type": "object"
+      },
+      "modality": {
+        "description": "All V1-declared modalities. Presence in the contract is not proof of runtime support; adapters advertise verified support only.",
+        "enum": ["text", "image", "audio", "video", "file", "mixed"],
+        "title": "Modality",
+        "type": "string"
+      },
+      "money": {
+        "additionalProperties": false,
+        "description": "Exact money value with declared currency.",
+        "properties": {
+          "amount": {
+            "$ref": "#/components/schemas/decimalAmount"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/currency"
+          }
+        },
+        "required": ["currency", "amount"],
+        "title": "Money",
+        "type": "object"
+      },
+      "refSource": {
+        "additionalProperties": false,
+        "description": "Caller-held content reference. The gateway never dereferences it; adapters declare what they accept.",
+        "properties": {
+          "ref": {
+            "maxLength": 1024,
+            "pattern": "^[\\w./-]{1,1024}$",
+            "type": "string"
+          }
+        },
+        "required": ["ref"],
+        "title": "RefSource",
+        "type": "object"
+      },
+      "requestId": {
+        "description": "Opaque gateway request identifier. No task-ID fields exist in V1; taskId/task_id/taskID are rejected as unknown properties.",
+        "maxLength": 100,
+        "pattern": "^req_[A-Za-z0-9_-]{8,96}$",
+        "title": "RequestId",
+        "type": "string"
+      },
+      "textBlock": {
+        "additionalProperties": false,
+        "description": "Plain text content. The only modality with first-slice runtime support; others are expressible but rejected by adapters until verified.",
+        "properties": {
+          "text": {
+            "maxLength": 200000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": {
+            "const": "text"
+          }
+        },
+        "required": ["type", "text"],
+        "title": "TextBlock",
+        "type": "object"
+      },
+      "timestamp": {
+        "description": "RFC3339 date-time string with bounded length. The pattern checks field ranges (month, day, hour, minute, second, offset); impossible calendar dates such as February 30 pass the shape check and are a consumer concern.",
+        "maxLength": 64,
+        "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d{1,9})?(Z|[+-]([01]\\d|2[0-3]):[0-5]\\d)$",
+        "title": "Timestamp",
+        "type": "string"
+      },
+      "tokenCount": {
+        "description": "Non-negative exact token count. Values above Number.MAX_SAFE_INTEGER are rejected as unsafe.",
+        "maximum": 9007199254740991,
+        "minimum": 0,
+        "title": "TokenCount",
+        "type": "integer"
+      },
+      "urlSource": {
+        "additionalProperties": false,
+        "description": "External content reference by URL. Server-side fetching, if ever needed, is allowlisted per adapter; no fetching exists in v1.",
+        "properties": {
+          "url": {
+            "maxLength": 2048,
+            "pattern": "^https?://",
+            "type": "string"
+          }
+        },
+        "required": ["url"],
+        "title": "UrlSource",
+        "type": "object"
+      },
+      "videoBlock": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 200000,
+            "type": "string"
+          },
+          "mimeType": {
+            "$ref": "#/components/schemas/mimeType"
+          },
+          "source": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/urlSource"
+              },
+              {
+                "$ref": "#/components/schemas/refSource"
+              }
+            ]
+          },
+          "type": {
+            "const": "video"
+          }
+        },
+        "required": ["type", "source"],
+        "title": "VideoBlock",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Heimdall contracts v1",
+    "version": "1"
+  },
+  "openapi": "3.1.0"
+}
