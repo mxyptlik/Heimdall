@@ -65,7 +65,7 @@ Milestones: M0 contracts/fixtures and DSH feasibility; M1 keyless deterministic 
 ## 4. Foundations: independent units first
 
 ### T001 — Workspace, tooling, and module boundaries
-- [ ] Status: IN_PROGRESS (owner: implementation engineer, 2026-09-22)
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `09c151b`)
 **Depends on:** none.
 **Owns:** root package/workspace configuration, `apps/gateway/`, `sdk/`, `integrations/`, boundary-check script and CI skeleton.
 **Work:** Establish an independent Heimdall Git root if absent; do not change the nested DSH repository. Pin supported Node/pnpm and dependency versions, strict TypeScript/ESM, formatting/linting, test scripts, lockfile install, and root `.gitignore`. Exclude `deepseek-harness/`, `.pnpm-store`, artifacts, secrets, and generated dependencies from workspaces and publication. Encode allowed module imports and SDK isolation. Provide local setup instructions and `.env.example` with names only.

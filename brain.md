@@ -13,11 +13,11 @@ The latest explicit user decision wins over an older recommendation. Do not sile
 
 ## Current checkpoint
 
-- Phase: implementation planning and document validation completed.
-- Heimdall application code: not scaffolded or implemented.
-- Mandatory implementation work: T001–T053, all TODO. Optional later work: T054 and T055, both TODO and disabled by default.
-- Next READY task: T001 (workspace/tooling/module boundaries). After it passes, T002. The plan lists the next independent branches after their shared contracts exist.
-- Active implementation owner/task: implementation engineer / T001 (workspace/tooling/module boundaries), IN_PROGRESS 2026-09-22. Do not mark a runtime task IN_PROGRESS merely because planning documents were written.
+- Phase: T001 complete; foundation workspace established and committed.
+- Heimdall application code: workspace/tooling/module-boundary scaffold only (no routing/selection/invocation logic yet).
+- Mandatory implementation work: T001 DONE; T002–T053 TODO. Optional later work: T054 and T055, both TODO and disabled by default.
+- Next READY task: T002 (contract primitives and error vocabulary). T002 depends only on T001.
+- Active implementation owner/task: none (T001 closed 2026-09-22).
 - Existing upstream reference: `deepseek-harness/`, initially pinned to `ddefc45`; verify current HEAD and working tree before connector work.
 - Open setup blockers: none for keyless scaffolding. Paid evaluation, exact candidate choice, release license and credentials are handled by their explicit future tasks.
 - Current web-server uptime is unknown. A successful launch was observed during setup; do not assume it is still running after a restart or new session.
@@ -55,6 +55,23 @@ Artifact paths:
 Limitations / untested paths:
 ```
 
+### V-20260922-02 — T001 workspace/tooling/boundaries
+
+- Task(s): T001.
+- Source revision / working-tree state: Heimdall git root initialized 2026-09-22, commit `09c151b` (root commit, includes planning baseline + T001 scaffold); `deepseek-harness/` at `ddefc45`, clean, untouched; `.pnpm-store/` outside repo.
+- Commands and working directory (`C:\Users\User\Desktop\Heimdall`, via `pnpm.cmd` to avoid the `.ps1` execution-policy block):
+  - `pnpm.cmd install --frozen-lockfile` — exit 0; 6 workspace projects, 110 packages.
+  - `node scripts/check-boundaries.mjs` — exit 0; 12 source files scanned, workspace globs exclude DSH/store.
+  - Negative test: appended `import '@heimdall/gateway'` to `sdk/typescript/src/index.ts` → checker exit 1 with `sdk forbidden import`; restored file → exit 0. This caught and fixed a real gap: bare side-effect imports were initially undetected (added `bare` import pattern to the checker).
+  - `pnpm.cmd ls --recursive --depth -1` — exit 0; lists root + 5 `@heimdall/*` packages only, no DSH entry.
+  - `pnpm.cmd lint` (scoped prettier check) — exit 0. Full-repo `prettier --check .` fails on pre-existing planning docs and 109 archived typesafe-source snapshots; lint scope intentionally covers only T001-owned trees so the baseline docs are not reformatted (recorded choice, not a failure to fix).
+  - `pnpm.cmd typecheck` (`tsc -b` project references) — exit 0.
+  - `pnpm.cmd test` (vitest 4.1.8, no test files yet) — exit 0 via `passWithNoTests`.
+  - Secret sweep (grep for `sk-`, private-key, `AKIA`, `ghp_`, `xox*` across `apps/`, `sdk/`, `scripts/`) — no matches. `.env.example` holds names only; no `.env` file exists.
+- Artifact paths: `package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `tsconfig.base.json`, `tsconfig.json`, `vitest.config.ts`, `README.md`, `.env.example`, `.gitignore`, `.prettierrc`, `.prettierignore`, `.github/workflows/ci.yml`, `apps/gateway/`, `packages/contracts/`, `packages/testkit/`, `sdk/typescript/`, `integrations/deepseek-harness/`, `scripts/check-boundaries.mjs`.
+- Pinned versions (see README): Node 24.11.1, pnpm 11.19.0, TypeScript 5.9.3 (deliberate 5.x choice; DSH uses 6.0.3, TS 7.0.2 latest avoided for ecosystem stability), Vitest 4.1.8 (matches proven upstream tooling), Prettier 3.6.2, Fastify 5.12.5, Ajv 8.20.0, pg 8.23.0, @types/node 24.11.1.
+- Limitations / untested paths: no gateway/route/sdk behavior exists yet (T002+); CI workflow file not executed on a remote runner (no remote configured, nothing pushed); cross-module deep-import rule and connector DSH-internal rules are syntactically enforced but have no violating fixture in-tree beyond the manual negative test; Windows host only — Linux container check deferred to T049.
+
 Never store keys, temporary browser access tokens, raw customer prompts, or sensitive outputs in this file. Reference a redacted artifact instead.
 
 ## Decision and change ledger
@@ -90,7 +107,20 @@ Supersedes: earlier ID (keep the earlier entry)
 
 ## Task execution log
 
-No Heimdall implementation tasks have started. Append one entry per meaningful attempt or completed task; do not replace this section with an unsupported completion summary.
+```text
+Task ID / title: T001 — Workspace, tooling, and module boundaries
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: none (only dependency-free task in the graph)
+Files / commit: Heimdall git root init + commit 09c151b (scaffold + planning baseline; DSH/store/node_modules/dist ignored, DSH checkout untouched at ddefc45)
+Behavior delivered: pinned workspace (Node 24.11.1, pnpm 11.19.0, TS 5.9.3, Vitest 4.1.8, Prettier 3.6.2, Fastify 5.12.5, Ajv 8.20.0, pg 8.23.0); 5 member packages; 8 gateway module public.ts entrypoints; boundary checker enforcing SDK/contract/connector/gateway isolation + workspace exclusion; scoped lint/typecheck/test scripts; CI skeleton; README setup guide; .env.example names only
+Verification record IDs: V-20260922-02
+Remaining limitations: no runtime behavior yet; CI file unexecuted remotely; Linux host check deferred to T049
+Decision changes: routine engineering choices only (TS 5.9.3 pin; prettier lint scoped to owned trees) — no product decision changed
+Next READY tasks: T002
+```
+
+Append one entry per meaningful attempt or completed task below the template; do not replace this section with an unsupported completion summary.
 
 ```text
 Task ID / title:
@@ -119,4 +149,4 @@ Next READY tasks:
 
 Reusable implementation instruction: [BUILD_PROMPT.md](BUILD_PROMPT.md). Execution clarifications: [build handoff](docs/build-handoff.md). Added 2026-09-22 after reviewing the existing plan, design, domain context and research. These clarify document authority, superseded research examples, portable setup and external completion gates; they do not alter product scope or start implementation.
 
-The next implementation agent should begin T001, establish the workspace without enrolling the upstream harness, and then T002. Use task acceptance criteria as the completion test. Update this file and the task checkbox together. This planning request does not authorize claiming any application task complete or publishing packages/services.
+The next implementation agent should begin T002 (contract primitives and error vocabulary) on top of commit `09c151b`, then follow the plan's dependency order. Use task acceptance criteria as the completion test. Update this file and the task checkbox together. This planning request does not authorize claiming any application task complete or publishing packages/services.
