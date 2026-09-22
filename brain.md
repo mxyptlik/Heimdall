@@ -13,11 +13,11 @@ The latest explicit user decision wins over an older recommendation. Do not sile
 
 ## Current checkpoint
 
-- Phase: T012+T015 complete; budget ledger and candidate ranking committed.
-- Heimdall application code: pure domain through ranking (T001–T006, T008, T010–T015). No routing composition, persistence, transport, or SDK yet.
-- Mandatory implementation work: T001–T006, T008, T010–T015 DONE; all others TODO. Optional later work: T054 and T055, both TODO and disabled by default.
-- Next READY tasks: T007 needs T002+T005+T006 — READY. T009 needs T002 — READY. T016 needs T015 — READY now (T015 DONE). T017 needs T006 — READY. T018 needs T008 — READY. T020 needs T003+T004+T006+T012 — READY now (all DONE; requires a PostgreSQL instance — verify availability first). T019 needs T016+T017+T018 — blocked on T016/T017/T018. T023 needs T020+T012+T006 — blocked on T020. Dependency-ready now: T007, T009, T016, T017, T018, T020.
-- Active implementation owner/task: none (T012+T015 closed 2026-09-22).
+- Phase: T016+T017 complete; two-pass orchestration and fake provider committed.
+- Heimdall application code: pure domain through two-pass (T001–T006, T008, T010–T016) + testkit provider harness (T017). No routing composition, persistence, transport, or SDK yet.
+- Mandatory implementation work: T001–T006, T008, T010–T017 DONE; all others TODO. Optional later work: T054 and T055, both TODO and disabled by default.
+- Next READY tasks: T007 needs T002+T005+T006 — READY. T009 needs T002 — READY. T018 needs T008 — READY. T019 needs T016+T017+T018 — blocked on T018. T020 needs T003+T004+T006+T012 — READY (requires a PostgreSQL instance — verify availability first). T024 needs T021+T005+T018 — blocked on T021/T018. Dependency-ready now: T007, T009, T018, T020.
+- Active implementation owner/task: none (T016+T017 closed 2026-09-22).
 - Existing upstream reference: `deepseek-harness/`, initially pinned to `ddefc45`; verify current HEAD and working tree before connector work.
 - Open setup blockers: none for keyless scaffolding. Paid evaluation, exact candidate choice, release license and credentials are handled by their explicit future tasks.
 - Current web-server uptime is unknown. A successful launch was observed during setup; do not assume it is still running after a restart or new session.
@@ -166,6 +166,21 @@ Limitations / untested paths:
 - Scope preserved: durable claims/leases/crash recovery (T023), numeric confidence-bound methods (T044), relevance calibration (T043).
 - Limitations / untested paths: ledger is pure/in-process — no PostgreSQL concurrency proof (T023); no HTTP transport test (T029+); Windows host only.
 
+### V-20260922-10 — T016 two-pass orchestration + T017 fake provider
+
+- Task(s): T016, T017 (parallel work packages, distinct file ownership).
+- Source revision / working-tree state: Heimdall commit `d0e273b` (on top of `bf2941a`); `deepseek-harness/` at `ddefc45`, clean, untouched.
+- Commands and working directory (`C:\Users\User\Desktop\Heimdall`, via `pnpm.cmd`):
+  - `pnpm.cmd test` (workspace) — exit 0; 20 files, 178 tests (5 two-pass incl. 100-iteration bound fuzz, 10 fake-provider, rest pre-existing).
+  - `pnpm.cmd typecheck` (root), gateway and testkit `typecheck` — exit 0.
+  - `pnpm.cmd lint`, `pnpm.cmd boundaries` (29 source files) — exit 0.
+  - Secret sweep across new code — no matches.
+- Artifact paths: `apps/gateway/src/modules/selection/domain/compose.ts`; `apps/gateway/test/two-pass.test.ts`; `packages/testkit/src/{clock,random,provider}.ts`; `packages/testkit/test/fake-provider.test.ts`; `packages/testkit/tsconfig.tests.json`.
+- Fixes during verification: stray brace from tail edits (caught by tsc before any test run); two test scenarios violated the 4000-char description bound and silently selected nothing — rebuilt with bound-respecting bulk tools, which also documents that contract bounds shape fixtures; generation-test timeout raised to 60s (schema growth slowed spawned runs; correctness unaffected, --check passed throughout); batch-write loss struck again on `selection/public.ts` (verified-then-rewrote serially).
+- Engineering choices (within accepted design, no product change): eligibility runs on the planner estimate while binding rechecks the exact selected sum; one repair round trims non-essentials and re-walks ranked fallbacks with no new semantic calls; essentials failing everywhere report ESSENTIAL_TOOLS_DO_NOT_FIT; fake scenarios replay synchronously on a fake clock with sparse-seq-tolerant ordinals; pre-dispatch abort reports CANCELLED/possibly_started; recordings redact text to block lengths; testkit stays private with a namespaced provider id.
+- Scope preserved: routing service wrapping (T027), TS port interfaces (T030), fake semantic engine (T018), live provider streams (T031).
+- Limitations / untested paths: no HTTP transport test (T029+); Windows host only.
+
 ### V-20260922-08 — T013 continuity reducer + T014 tool selection
 
 - Task(s): T013, T014 (parallel work packages, distinct file ownership).
@@ -227,6 +242,32 @@ Verification record IDs: V-20260922-02
 Remaining limitations: no runtime behavior yet; CI file unexecuted remotely; Linux host check deferred to T049
 Decision changes: routine engineering choices only (TS 5.9.3 pin; prettier lint scoped to owned trees) — no product decision changed
 Next READY tasks: T002
+```
+
+```text
+Task ID / title: T016 — Bounded model/tool compatibility orchestration
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: T015 DONE (ranking + traces)
+Files / commit: commit d0e273b (shared with T017; distinct files: selection/domain/compose.ts + two-pass.test.ts)
+Behavior delivered: composeRoute two-pass (tool selection, eligibility on planner estimate, ranking, exact-fit compatibility walk, single repair round trimming non-essentials, explicit ESSENTIAL/NO_ROUTE failures); passesUsed instrumentation with 100-iteration bound fuzz; essentials never silently dropped
+Verification record IDs: V-20260922-10
+Remaining limitations: routing-service wrapping deferred to T027; TS port interfaces to T030
+Decision changes: routine engineering choices only (listed in V-20260922-10) — no product decision changed
+Next READY tasks: T007, T009, T018, T020
+```
+
+```text
+Task ID / title: T017 — Deterministic fake provider and stream harness
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: T006 DONE (stream event shapes)
+Files / commit: commit d0e273b (shared with T016; distinct files: testkit clock/random/provider + fake-provider.test.ts + tsconfig.tests.json)
+Behavior delivered: scripted scenario runner (events/fail/disconnect/mismatch/delay) with exact replay order on a fake clock; pre-dispatch abort conservatism; mismatch surfacing; redacted request recordings; seeded randomness; namespaced test-only identity; 10 tests
+Verification record IDs: V-20260922-10
+Remaining limitations: fake semantic engine is T018; live streams in T031
+Decision changes: routine engineering choices only (listed in V-20260922-10) — no product decision changed
+Next READY tasks: T007, T009, T018, T020
 ```
 
 ```text

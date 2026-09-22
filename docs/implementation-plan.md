@@ -172,7 +172,7 @@ Milestones: M0 contracts/fixtures and DSH feasibility; M1 keyless deterministic 
 **Acceptance/evidence:** Fixed inputs and snapshots yield identical ranking; cheaper ineligible models never win; a tie retains the current candidate; fallback candidates meet the same hard requirements; sparse evidence cannot masquerade as proven quality.
 
 ### T016 — Bounded model/tool compatibility orchestration
-- [ ] Status: TODO
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `d0e273b`)
 **Depends on:** T015.
 **Owns:** pure two-pass selection use case.
 **Work:** Compose shortlist/features/selected tools with candidate constraints. Permit one compatibility repair using already evaluated alternatives, recheck exact token fit, then succeed or fail explicitly. Separate domain decisions from any network calls.
@@ -181,7 +181,7 @@ Milestones: M0 contracts/fixtures and DSH feasibility; M1 keyless deterministic 
 ## 6. Fixtures, persistence, and adapters
 
 ### T017 — Deterministic fake provider and stream harness
-- [ ] Status: TODO
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `d0e273b`)
 **Depends on:** T006.
 **Owns:** `packages/testkit/provider`.
 **Work:** Build scripted text/tool streams, usage, errors, delay, disconnect, cancellation and actual-model mismatch; fake clock and seeded randomness; request recording with redaction. Expose fixture APIs for SDK/DSH tests without importing gateway internals.
