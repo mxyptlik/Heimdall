@@ -1,0 +1,25 @@
+{
+  "name": "heimdall",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=24.11.1 <25",
+    "pnpm": ">=11.0.0"
+  },
+  "scripts": {
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "lint": "prettier --check apps packages sdk integrations scripts README.md vitest.config.ts package.json pnpm-workspace.yaml tsconfig.base.json tsconfig.json .prettierrc .github/workflows/ci.yml",
+    "format": "prettier --write apps packages sdk integrations scripts README.md vitest.config.ts package.json pnpm-workspace.yaml tsconfig.base.json tsconfig.json .prettierrc .github/workflows/ci.yml",
+    "boundaries": "node scripts/check-boundaries.mjs",
+    "ci": "pnpm install --frozen-lockfile && pnpm boundaries && pnpm typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "24.11.1",
+    "prettier": "3.6.2",
+    "typescript": "5.9.3",
+    "vitest": "4.1.8"
+  }
+}

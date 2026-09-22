@@ -1,0 +1,9 @@
+# Heimdall pnpm workspace.
+# Explicit globs only. The upstream reference checkout (deepseek-harness/),
+# the local dependency store (.pnpm-store/), build output, and installed
+# dependencies are intentionally excluded and must never be added here.
+packages:
+  - 'apps/*'
+  - 'packages/*'
+  - 'sdk/typescript'
+  - 'integrations/*'

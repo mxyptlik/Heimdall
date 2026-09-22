@@ -1,0 +1,20 @@
+{
+  "name": "@heimdall/gateway",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/main.js",
+  "scripts": {
+    "typecheck": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "fastify": "5.12.5",
+    "pg": "8.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.11.1",
+    "typescript": "5.9.3"
+  }
+}

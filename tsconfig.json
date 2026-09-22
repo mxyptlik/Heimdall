@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "references": [
+    { "path": "./apps/gateway" },
+    { "path": "./packages/contracts" },
+    { "path": "./packages/testkit" },
+    { "path": "./sdk/typescript" },
+    { "path": "./integrations/deepseek-harness" }
+  ],
+  "include": []
+}

@@ -1,0 +1,24 @@
+# Heimdall dependency stores, upstream reference, build output, secrets
+deepseek-harness/
+.pnpm-store/
+node_modules/
+dist/
+build/
+coverage/
+.turbo/
+
+# Environment and secrets (names only in .env.example; never commit values)
+.env
+.env.*
+!.env.example
+
+# Logs and OS artifacts
+*.log
+.DS_Store
+Thumbs.db
+
+# Editor and tool caches
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.tsbuildinfo
