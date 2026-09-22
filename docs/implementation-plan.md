@@ -72,7 +72,7 @@ Milestones: M0 contracts/fixtures and DSH feasibility; M1 keyless deterministic 
 **Acceptance/evidence:** A clean keyless install/typecheck succeeds on the supported runtime; an intentionally forbidden module import is rejected; workspace listing excludes DSH; document actual versions and commands. Do not set up remote publishing or push anything.
 
 ### T002 — Contract primitives and error vocabulary
-- [ ] Status: TODO
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `3813f65`)
 **Depends on:** T001.
 **Owns:** `packages/contracts` primitive schemas/types and version policy.
 **Work:** Define IDs for request/decision/attempt only; exact money and token units; timestamps; profile enums; modality blocks; typed errors and execution certainty. Generate types/OpenAPI components from one schema source with strict request parsing and explicit extension fields. Decide additive versus breaking-version rules.

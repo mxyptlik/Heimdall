@@ -13,11 +13,11 @@ The latest explicit user decision wins over an older recommendation. Do not sile
 
 ## Current checkpoint
 
-- Phase: T001 complete; foundation workspace established and committed.
-- Heimdall application code: workspace/tooling/module-boundary scaffold only (no routing/selection/invocation logic yet).
-- Mandatory implementation work: T001 DONE; T002–T053 TODO. Optional later work: T054 and T055, both TODO and disabled by default.
-- Next READY task: T002 (contract primitives and error vocabulary). T002 depends only on T001.
-- Active implementation owner/task: none (T001 closed 2026-09-22).
+- Phase: T002 complete; contract primitives, error vocabulary, and generation pipeline committed.
+- Heimdall application code: workspace scaffold (T001) + `@heimdall/contracts` primitives/validation/generation (T002). No routing/selection/invocation logic yet.
+- Mandatory implementation work: T001–T002 DONE; T003–T053 TODO. Optional later work: T054 and T055, both TODO and disabled by default.
+- Next READY tasks: T003 (candidate profile schemas; needs T002 only), T004 (policy schemas; needs T002 only), T008 (semantic port; needs T002+T005 — blocked on T005), T009 (dataset manifest; needs T002 only). Dependency-ready now: T003, T004, T009.
+- Active implementation owner/task: none (T002 closed 2026-09-22).
 - Existing upstream reference: `deepseek-harness/`, initially pinned to `ddefc45`; verify current HEAD and working tree before connector work.
 - Open setup blockers: none for keyless scaffolding. Paid evaluation, exact candidate choice, release license and credentials are handled by their explicit future tasks.
 - Current web-server uptime is unknown. A successful launch was observed during setup; do not assume it is still running after a restart or new session.
@@ -56,7 +56,6 @@ Limitations / untested paths:
 ```
 
 ### V-20260922-02 — T001 workspace/tooling/boundaries
-
 - Task(s): T001.
 - Source revision / working-tree state: Heimdall git root initialized 2026-09-22, commit `09c151b` (root commit, includes planning baseline + T001 scaffold); `deepseek-harness/` at `ddefc45`, clean, untouched; `.pnpm-store/` outside repo.
 - Commands and working directory (`C:\Users\User\Desktop\Heimdall`, via `pnpm.cmd` to avoid the `.ps1` execution-policy block):
@@ -71,6 +70,22 @@ Limitations / untested paths:
 - Artifact paths: `package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `tsconfig.base.json`, `tsconfig.json`, `vitest.config.ts`, `README.md`, `.env.example`, `.gitignore`, `.prettierrc`, `.prettierignore`, `.github/workflows/ci.yml`, `apps/gateway/`, `packages/contracts/`, `packages/testkit/`, `sdk/typescript/`, `integrations/deepseek-harness/`, `scripts/check-boundaries.mjs`.
 - Pinned versions (see README): Node 24.11.1, pnpm 11.19.0, TypeScript 5.9.3 (deliberate 5.x choice; DSH uses 6.0.3, TS 7.0.2 latest avoided for ecosystem stability), Vitest 4.1.8 (matches proven upstream tooling), Prettier 3.6.2, Fastify 5.12.5, Ajv 8.20.0, pg 8.23.0, @types/node 24.11.1.
 - Limitations / untested paths: no gateway/route/sdk behavior exists yet (T002+); CI workflow file not executed on a remote runner (no remote configured, nothing pushed); cross-module deep-import rule and connector DSH-internal rules are syntactically enforced but have no violating fixture in-tree beyond the manual negative test; Windows host only — Linux container check deferred to T049.
+
+### V-20260922-03 — T002 contract primitives and error vocabulary
+
+- Task(s): T002.
+- Source revision / working-tree state: Heimdall commit `3813f65` (on top of `a9a822e`); `deepseek-harness/` at `ddefc45`, clean, untouched.
+- Commands and working directory (`C:\Users\User\Desktop\Heimdall`, via `pnpm.cmd`):
+  - `pnpm.cmd --filter @heimdall/contracts generate` — exit 0; emits `src/generated/types.ts`, `src/generated/root-schema.ts`, `openapi/components.json` (25 schemas, OpenAPI 3.1.0).
+  - `pnpm.cmd --filter @heimdall/contracts gen:check` — exit 0; committed files byte-match regeneration.
+  - `pnpm.cmd --filter @heimdall/contracts test` — exit 0; 4 files, 29 tests pass (16 primitives, 5 content, 6 errors, 2 generation).
+  - `pnpm.cmd --filter @heimdall/contracts typecheck` (`tsc -b` + `tsc --noEmit -p tsconfig.tests.json`) — exit 0.
+  - Root gate — exit 0: `pnpm.cmd typecheck`, `pnpm.cmd boundaries` (16 source files), `pnpm.cmd lint`, `pnpm.cmd test` (29 tests via workspace run).
+  - Secret sweep across `packages/contracts` — no keys/tokens/credentials (only prose mentions of task-ID exclusion).
+- Artifact paths: `packages/contracts/src/schemas/heimdall.v1.json` (single source, 25 `$defs`), `src/generated/`, `openapi/components.json`, `src/validate.ts`, `src/errors.ts`, `test/*.test.ts` (4 files), `VERSIONING.md`, `scripts/generate.mjs`, `tsconfig.tests.json`.
+- Fixes during verification (history preserved, not erased): timestamp regex tightened to range-check fields after a test caught shape-only acceptance; generator now prettier-formats the OpenAPI JSON so committed output always matches; Ajv CJS constructor crosses via `createRequire` behind a minimal structural interface after proving Ajv default-export types do not resolve under nodenext/TS 5.9 (runtime import verified); a failed `tsc -b` with tests under `rootDir: src` emitted stray in-place `.js/.d.ts` — deleted, emit config now strictly `src`-only with tests typechecked via `tsconfig.tests.json`.
+- Engineering choices (within accepted design, no product change): single-file schema source; embedded root schema keeps `dist` self-contained; `extensions` reserved with zero allowed keys in v1; currency as 3-letter pattern (full allowlist deferred to T032); timestamp shape plus field ranges with Feb-30-class dates documented as consumer concern; ERROR_CATALOG default retryability per code with recorded reasons.
+- Limitations / untested paths: request/result composition belongs to T005 (no RouteRequest yet); catalog/policy/usage composites intentionally absent (T003/T004/T006 own them); Ajv validated in-process JSON values only — no HTTP transport test yet (T029+); Windows host only.
 
 Never store keys, temporary browser access tokens, raw customer prompts, or sensitive outputs in this file. Reference a redacted artifact instead.
 
@@ -118,6 +133,19 @@ Verification record IDs: V-20260922-02
 Remaining limitations: no runtime behavior yet; CI file unexecuted remotely; Linux host check deferred to T049
 Decision changes: routine engineering choices only (TS 5.9.3 pin; prettier lint scoped to owned trees) — no product decision changed
 Next READY tasks: T002
+```
+
+```text
+Task ID / title: T002 — Contract primitives and error vocabulary
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: T001 DONE (commit a9a822e; workspace/boundaries/toolchain)
+Files / commit: commit 3813f65 (16 files in packages/contracts + lockfile; DSH checkout untouched at ddefc45)
+Behavior delivered: single-source JSON Schema (25 $defs: IDs, money, token counts, timestamps, profiles, all 6 modalities, extensions, 17-code error envelope); generated TS types + embedded root schema + OpenAPI 3.1.0 components (deterministic, drift-checked); strict Ajv2020 validation rejecting unknown/task-ID/oversized/unsafe/invalid-currency input; ERROR_CATALOG with per-code default retryability; VERSIONING.md (additive vs breaking rules); 29 behavior tests
+Verification record IDs: V-20260922-03
+Remaining limitations: no RouteRequest yet (T005); catalog/policy/usage composites out of scope (T003/T004/T006); no transport test (T029+)
+Decision changes: routine engineering choices only (listed in V-20260922-03) — no product decision changed
+Next READY tasks: T003, T004, T009
 ```
 
 Append one entry per meaningful attempt or completed task below the template; do not replace this section with an unsupported completion summary.
