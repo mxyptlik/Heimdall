@@ -13,11 +13,11 @@ The latest explicit user decision wins over an older recommendation. Do not sile
 
 ## Current checkpoint
 
-- Phase: T008+T011 complete; semantic port spec and cost estimator committed.
-- Heimdall application code: workspace through eligibility (T001–T006, T010) + understanding port and cost math (T008/T011). No routing/ranking/invocation logic yet.
-- Mandatory implementation work: T001–T006, T008, T010, T011 DONE; all others TODO. Optional later work: T054 and T055, both TODO and disabled by default.
-- Next READY tasks: T007 needs T002+T005+T006 — READY. T009 needs T002 — READY. T012 needs T006+T011 — READY now (both DONE). T013 needs T004+T005+T008 — READY now (T008 DONE). T014 needs T004+T005+T008 — READY now. T017 needs T006 — READY. T018 needs T008 — READY now. T015 needs T010+T011+T013+T014 — blocked on T013/T014. Dependency-ready now: T007, T009, T012, T013, T014, T017, T018.
-- Active implementation owner/task: none (T008+T011 closed 2026-09-22).
+- Phase: T013+T014 complete; continuity reducer and tool selection committed.
+- Heimdall application code: workspace through cost math (T001–T006, T008, T010, T011) + continuity and tool selection (T013/T014). No ranking/routing/invocation logic yet.
+- Mandatory implementation work: T001–T006, T008, T010, T011, T013, T014 DONE; all others TODO. Optional later work: T054 and T055, both TODO and disabled by default.
+- Next READY tasks: T007 needs T002+T005+T006 — READY. T009 needs T002 — READY. T012 needs T006+T011 — READY. T015 needs T010+T011+T013+T014 — READY now (all DONE). T017 needs T006 — READY. T018 needs T008 — READY. T016 needs T015 — blocked on T015. Dependency-ready now: T007, T009, T012, T015, T017, T018.
+- Active implementation owner/task: none (T013+T014 closed 2026-09-22).
 - Existing upstream reference: `deepseek-harness/`, initially pinned to `ddefc45`; verify current HEAD and working tree before connector work.
 - Open setup blockers: none for keyless scaffolding. Paid evaluation, exact candidate choice, release license and credentials are handled by their explicit future tasks.
 - Current web-server uptime is unknown. A successful launch was observed during setup; do not assume it is still running after a restart or new session.
@@ -151,6 +151,21 @@ Limitations / untested paths:
 - Scope preserved: Jev adapter (T025), state projector implementation (T026), calibration/thresholds (T042), task-level fitting (T044), budget ledger mechanics (T012).
 - Limitations / untested paths: no live Jev calls (keyless port spec only); no HTTP transport test (T029+); Windows host only.
 
+### V-20260922-08 — T013 continuity reducer + T014 tool selection
+
+- Task(s): T013, T014 (parallel work packages, distinct file ownership).
+- Source revision / working-tree state: Heimdall commit `adc4e29` (on top of `e15b632`); `deepseek-harness/` at `ddefc45`, clean, untouched.
+- Commands and working directory (`C:\Users\User\Desktop\Heimdall`, via `pnpm.cmd`):
+  - `pnpm.cmd test` (workspace) — exit 0; 16 files, 143 tests (8 continuity, 12 tool-selection, rest pre-existing).
+  - `pnpm.cmd typecheck` (root), gateway `typecheck` (emit + tests) — exit 0.
+  - `pnpm.cmd lint`, `pnpm.cmd boundaries` (26 source files) — exit 0.
+  - Secret sweep across new domain code — no matches.
+- Artifact paths: `apps/gateway/src/modules/understanding/domain/continuity.ts`; `apps/gateway/src/modules/tool-selection/domain/select.ts`; `apps/gateway/test/understanding-continuity.test.ts`; `apps/gateway/test/tool-selection.test.ts`.
+- Fixes during verification: all three failures were test bugs, implementation correct on first run — missing relevance inputs (empty relevance legitimately selects nothing), explicit-`undefined` under exact optionals (first-turn input built without the key).
+- Engineering choices (within accepted design, no product change): reducer is total over retain/select/reject with stale-revision rejection via INVALID_REQUEST; explicit caller reevaluation wins over uncertainty; compound requests reselect; strict pins ride into reselection metadata; selection is deterministic in catalog order with essential-first shortlist under a 200 working bound; relevance clamped to [0,1] with missing meaning irrelevant; bundles travel together; budget skips non-essentials but fails essentials visibly; caller reselection merges via relevance boost.
+- Scope preserved: no ranking (T015), no relevance calibration (T043), no execution permission anywhere (caller-owned).
+- Limitations / untested paths: reducer consumes mapped judgments — semantic mapping to booleans belongs to T026; relevance threshold value uncalibrated until T043; no HTTP transport test (T029+); Windows host only.
+
 Never store keys, temporary browser access tokens, raw customer prompts, or sensitive outputs in this file. Reference a redacted artifact instead.
 
 ## Decision and change ledger
@@ -197,6 +212,32 @@ Verification record IDs: V-20260922-02
 Remaining limitations: no runtime behavior yet; CI file unexecuted remotely; Linux host check deferred to T049
 Decision changes: routine engineering choices only (TS 5.9.3 pin; prettier lint scoped to owned trees) — no product decision changed
 Next READY tasks: T002
+```
+
+```text
+Task ID / title: T013 — Continuity and model-retention rules
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: T004 DONE, T005 DONE, T008 DONE
+Files / commit: commit adc4e29 (shared with T014; distinct files: understanding/domain/continuity.ts + understanding-continuity.test.ts)
+Behavior delivered: total reduceContinuity over retain/select/reject (per-invocation chat/RAG, first selection, uncertain retention, explicit reevaluation incl. no-progress as caller reason, mandatory eligibility-loss reselection, compound reselection, strict-pin carryover, stale-revision rejection); 8 tests incl. multi-iteration retain/select sequence
+Verification record IDs: V-20260922-08
+Remaining limitations: consumes mapped judgments (boolean mapping in T026); pin enforcement downstream (T015/T030)
+Decision changes: routine engineering choices only (listed in V-20260922-08) — no product decision changed
+Next READY tasks: T007, T009, T012, T015, T017, T018
+```
+
+```text
+Task ID / title: T014 — Authorized tool selection and schema budget
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: T004 DONE, T005 DONE, T008 DONE
+Files / commit: commit adc4e29 (shared with T013; distinct files: tool-selection/domain/select.ts + tool-selection.test.ts)
+Behavior delivered: authorized-only selectTools (schema-validated entries, deterministic essential-first shortlist under 200 bound, injected relevance with threshold, bundle preservation, token budget + count cap in catalog order, empty selection valid, ESSENTIAL_TOOLS_DO_NOT_FIT failures, schema digests); boostRelevance for caller-driven reselection; 12 tests incl. adversarial-description and invalid-entry cases
+Verification record IDs: V-20260922-08
+Remaining limitations: relevance threshold uncalibrated until T043; shortlist ranking heuristic subject to T043 evidence
+Decision changes: routine engineering choices only (listed in V-20260922-08) — no product decision changed
+Next READY tasks: T007, T009, T012, T015, T017, T018
 ```
 
 ```text

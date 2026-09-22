@@ -151,14 +151,14 @@ Milestones: M0 contracts/fixtures and DSH feasibility; M1 keyless deterministic 
 **Acceptance/evidence:** Property tests prove no admitted attempt exceeds available reserved cap under known bounded charges; retries never reset funds; unknown outcome retains conservative reservation; overrun reporting distinguishes provider uncertainty from arithmetic bugs.
 
 ### T013 — Continuity and model-retention rules
-- [ ] Status: TODO
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `adc4e29`)
 **Depends on:** T004, T005, T008.
 **Owns:** understanding continuity reducer.
 **Work:** Implement first selection, same-task retention, uncertain continuation, explicit reevaluation, clear new task, strict pin, compound request, and mandatory eligibility loss. Keep no-progress reevaluation caller-triggered. Preserve prior candidate across tool-only changes.
 **Acceptance/evidence:** A multi-iteration fixture retains one eligible model; new chat/RAG invocation selects anew; uncertainty alone never switches; a revoked or incapable candidate is not retained; stale state revisions cannot overwrite newer connector state.
 
 ### T014 — Authorized tool selection and schema budget
-- [ ] Status: TODO
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `adc4e29`)
 **Depends on:** T004, T005, T008.
 **Owns:** tool shortlist, relevance interpretation, dependencies, selected definitions.
 **Work:** Filter authorization first; use deterministic shortlist rules then injected relevance judgments. Enforce essential tools, declared bundles, token budget and optional count cap. Preserve schema order and version hashes; implement empty selection and additional-tool request handling. Bounded shortlist must fit Jev limits.
