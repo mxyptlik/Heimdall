@@ -136,6 +136,18 @@ checkFiles(
   'gateway',
 );
 
+// 4b. Pure domain code must not touch storage: no pg driver or platform
+// database imports inside src/modules/*/domain/.
+for (const file of gatewayFiles) {
+  const rel = relative(join(ROOT, 'apps/gateway/src'), file).replace(/\\/g, '/');
+  if (!rel.startsWith('modules/') || !rel.includes('/domain/')) continue;
+  for (const spec of importsOf(file)) {
+    if (spec === 'pg' || spec.startsWith('pg/') || spec.includes('/platform/')) {
+      fail(`domain storage access: ${rel} -> '${spec}' (storage lives in adapters, not domain)`);
+    }
+  }
+}
+
 // 5. Cross-module gateway imports must go through the target's public.ts.
 for (const file of gatewayFiles) {
   const rel = relative(join(ROOT, 'apps/gateway/src'), file).replace(/\\/g, '/');

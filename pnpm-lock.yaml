@@ -42,6 +42,9 @@ importers:
       '@types/node':
         specifier: 24.11.1
         version: 24.11.1
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -265,6 +268,9 @@ packages:
 
   '@types/node@24.11.1':
     resolution: {integrity: sha512-MOw3rIVR4djfMH7ft9ZJLPViaJwkZvMfrzumElas79IwMUEl8ykkuQmgL9MAMz7vO8G3vuz9b7Gu+keYZx7Xrw==}
+
+  '@types/pg@8.23.1':
+    resolution: {integrity: sha512-fKVHpikPdg4GKks3JuLEhvwSyvwzF23hnabPy6DD8ljVbC7+6J5dQzdv4arV6jqq57djnMgs1HKBxX4P8aBI3A==}
 
   '@vitest/expect@4.1.8':
     resolution: {integrity: sha512-h3nDO677RDLEGlBxyQ5CW8RlMThSKSRLUePLOx09gNIWRL40edgA1GCZSZgf1W55MFAG6/Sw14KeaAnqv0NKdQ==}
@@ -903,6 +909,12 @@ snapshots:
   '@types/node@24.11.1':
     dependencies:
       undici-types: 7.16.0
+
+  '@types/pg@8.23.1':
+    dependencies:
+      '@types/node': 24.11.1
+      pg-protocol: 1.16.0
+      pg-types: 2.2.0
 
   '@vitest/expect@4.1.8':
     dependencies:
