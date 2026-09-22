@@ -93,7 +93,7 @@ Milestones: M0 contracts/fixtures and DSH feasibility; M1 keyless deterministic 
 **Acceptance/evidence:** Lower-level preferences cannot widen hard permissions; a body tenant ID cannot override authenticated identity; strict pin and fallback permission are unambiguous; policy output is immutable/versioned.
 
 ### T005 — Canonical request, tools, and continuity data
-- [ ] Status: TODO
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `eade6c5`)
 **Depends on:** T002, T004.
 **Owns:** native route request/result schemas and caller routing-state fields.
 **Work:** Define messages, application/policy requirements, authorized tool definitions/versions, enabled/disabled selection semantics, reevaluation reasons, remaining task budget, prior candidate, compact objective descriptor, and state revision. Define canonical hashing rules including order where model-visible order matters. Include multimodal requirements while marking first-slice runtime support text-only.

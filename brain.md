@@ -13,11 +13,11 @@ The latest explicit user decision wins over an older recommendation. Do not sile
 
 ## Current checkpoint
 
-- Phase: T003+T004 complete; profiles, policy resolution, and synthetic fixtures committed.
-- Heimdall application code: workspace (T001) + contracts primitives/generation (T002) + catalog profile domain + access policy resolver (T003/T004). No routing/selection/invocation logic yet.
-- Mandatory implementation work: T001–T004 DONE; T005–T053 TODO. Optional later work: T054 and T055, both TODO and disabled by default.
-- Next READY tasks: T005 needs T002+T004 — READY now (T004 DONE). T009 needs T002 — READY (independent manifest work). T006 needs T002+T005 — blocked on T005. T008 needs T002+T005 — blocked on T005. T010 needs T003+T004+T005 — blocked on T005. Dependency-ready now: T005, T009.
-- Active implementation owner/task: none (T003+T004 closed 2026-09-22).
+- Phase: T005 complete; native request/result schemas and canonical hashing committed.
+- Heimdall application code: workspace (T001) + contracts primitives/generation (T002) + catalog/access domain (T003/T004) + request/result/canonical (T005). No routing/selection/invocation logic yet.
+- Mandatory implementation work: T001–T005 DONE; T006–T053 TODO. Optional later work: T054 and T055, both TODO and disabled by default.
+- Next READY tasks: T006 needs T002+T005 — READY now. T008 needs T002+T005 — READY now. T009 needs T002 — READY (independent manifest work). T010 needs T003+T004+T005 — READY now. T007 needs T002+T005+T006 — blocked on T006. Dependency-ready now: T006, T008, T009, T010.
+- Active implementation owner/task: none (T005 closed 2026-09-22).
 - Existing upstream reference: `deepseek-harness/`, initially pinned to `ddefc45`; verify current HEAD and working tree before connector work.
 - Open setup blockers: none for keyless scaffolding. Paid evaluation, exact candidate choice, release license and credentials are handled by their explicit future tasks.
 - Current web-server uptime is unknown. A successful launch was observed during setup; do not assume it is still running after a restart or new session.
@@ -104,6 +104,22 @@ Limitations / untested paths:
 - Scope preserved: no request/result schemas (T005), no storage/publication (T020/T021/T022), no usage composites (T006), snapshot publication mechanics deferred to T021.
 - Limitations / untested paths: resolver is pure/in-process — no HTTP/admin transport (T022/T029); policy versions are opaque IDs with no rotation semantics yet (T022); candidate `revision` recorded but snapshot immutability untested without storage (T021); Windows host only.
 
+### V-20260922-05 — T005 request schemas and canonical hashing
+
+- Task(s): T005.
+- Source revision / working-tree state: Heimdall commit `eade6c5` (on top of `c0daaaa`); `deepseek-harness/` at `ddefc45`, clean, untouched.
+- Commands and working directory (`C:\Users\User\Desktop\Heimdall`, via `pnpm.cmd`):
+  - `pnpm.cmd --filter @heimdall/contracts generate` + `gen:check` — exit 0; schema grows 50 → 71 `$defs`, OpenAPI components regenerated deterministically.
+  - `pnpm.cmd --filter @heimdall/contracts test` — exit 0; 6 files, 47 tests (18 new: 13 request + 5 canonical).
+  - `pnpm.cmd --filter @heimdall/contracts typecheck`, `pnpm.cmd typecheck` — exit 0.
+  - Root gate — exit 0: `pnpm.cmd lint`, `pnpm.cmd boundaries` (19 source files), `pnpm.cmd test` (8 files, 72 tests workspace-wide).
+  - Secret sweep on new files — no matches.
+- Artifact paths: 21 new request/result `$defs` in `heimdall.v1.json` + regenerated `generated/`/`openapi/`; `packages/contracts/src/canonical.ts`; `test/route-request.test.ts`; `test/canonical.test.ts`.
+- Fixes during verification: Ajv strict mode rejects `then: { required: [...] }` without sibling `properties` (strictRequired) — restructured to a self-contained `enabledToolSelection` `$ref` instead of weakening strictness; test helper typed as `Message` (was widened `string` role); key-shuffle test rebuilt manually (JSON replacer arrays drop nested keys).
+- Engineering choices (within accepted design, no product change): enabled selection requires a catalog (possibly empty) via if/then; disabled selection with a catalog is pass-through; routing state carries no permissions/policy/tenant/task fields (rejected as unknown); tenant has no body field; canonical form sorts object keys and preserves array order (messages, tool definitions); SHA-256 hex digests for prepared-route binding; side-effect classes read/write/external; per-invocation budget/deadline optional at schema with transport defaults deferred to T029.
+- Scope preserved: no routing service logic (T027), no prepared-route tokens (T028), cost estimation optional until T011, tool relevance semantics deferred to T014.
+- Limitations / untested paths: validation is in-process only — no HTTP transport test (T029+); Windows host only.
+
 Never store keys, temporary browser access tokens, raw customer prompts, or sensitive outputs in this file. Reference a redacted artifact instead.
 
 ## Decision and change ledger
@@ -150,6 +166,19 @@ Verification record IDs: V-20260922-02
 Remaining limitations: no runtime behavior yet; CI file unexecuted remotely; Linux host check deferred to T049
 Decision changes: routine engineering choices only (TS 5.9.3 pin; prettier lint scoped to owned trees) — no product decision changed
 Next READY tasks: T002
+```
+
+```text
+Task ID / title: T005 — Canonical request, tools, and continuity data
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: T002 DONE, T004 DONE (request primitives + policy shapes)
+Files / commit: commit eade6c5 (8 files in packages/contracts; DSH checkout untouched at ddefc45)
+Behavior delivered: 21 request/result $defs (messages, tool definitions with essential/bundle metadata, enabled/disabled toolSelection with if/then catalog requirement, reevaluation reasons, permission-free routingState, budgets/deadlines, pins, routeResult with fallbacks/reasons/versions/retention); canonicalize + digestCanonical (sorted keys, significant array order, SHA-256); 18 new tests covering chat/RAG/coding fixtures, tool-selection semantics, state smuggling rejection, tenant/task exclusion, hash rules
+Verification record IDs: V-20260922-05
+Remaining limitations: in-process validation only (transport T029+); cost estimation optional until T011; relevance semantics T014
+Decision changes: routine engineering choices only (listed in V-20260922-05) — no product decision changed
+Next READY tasks: T006, T008, T009, T010
 ```
 
 ```text
