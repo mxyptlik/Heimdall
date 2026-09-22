@@ -13,11 +13,11 @@ The latest explicit user decision wins over an older recommendation. Do not sile
 
 ## Current checkpoint
 
-- Phase: T006+T010 complete; stream interfaces, exact decimals, and eligibility committed.
-- Heimdall application code: workspace through request schemas (T001–T005) + stream/decimal contracts and eligibility engine (T006/T010). No routing/ranking/invocation logic yet.
-- Mandatory implementation work: T001–T006, T010 DONE; all others TODO. Optional later work: T054 and T055, both TODO and disabled by default.
-- Next READY tasks: T007 needs T002+T005+T006 — READY now (T006 DONE). T008 needs T002+T005 — READY. T009 needs T002 — READY. T011 needs T003+T004+T006 — READY now. T014 needs T004+T005+T008 — blocked on T008. T015 needs T010+T011+T013+T014 — blocked on T011/T013/T014. T017 needs T006 — READY now. Dependency-ready now: T007, T008, T009, T011, T013 (needs T004+T005+T008 — blocked on T008), T017.
-- Active implementation owner/task: none (T006+T010 closed 2026-09-22).
+- Phase: T008+T011 complete; semantic port spec and cost estimator committed.
+- Heimdall application code: workspace through eligibility (T001–T006, T010) + understanding port and cost math (T008/T011). No routing/ranking/invocation logic yet.
+- Mandatory implementation work: T001–T006, T008, T010, T011 DONE; all others TODO. Optional later work: T054 and T055, both TODO and disabled by default.
+- Next READY tasks: T007 needs T002+T005+T006 — READY. T009 needs T002 — READY. T012 needs T006+T011 — READY now (both DONE). T013 needs T004+T005+T008 — READY now (T008 DONE). T014 needs T004+T005+T008 — READY now. T017 needs T006 — READY. T018 needs T008 — READY now. T015 needs T010+T011+T013+T014 — blocked on T013/T014. Dependency-ready now: T007, T009, T012, T013, T014, T017, T018.
+- Active implementation owner/task: none (T008+T011 closed 2026-09-22).
 - Existing upstream reference: `deepseek-harness/`, initially pinned to `ddefc45`; verify current HEAD and working tree before connector work.
 - Open setup blockers: none for keyless scaffolding. Paid evaluation, exact candidate choice, release license and credentials are handled by their explicit future tasks.
 - Current web-server uptime is unknown. A successful launch was observed during setup; do not assume it is still running after a restart or new session.
@@ -136,6 +136,21 @@ Limitations / untested paths:
 - Scope preserved: no retry/fallback sequencing (T030), no provider transport (T031), no ranking (T015), no snapshot joins (T021).
 - Limitations / untested paths: fixtures are schema-level, not live provider streams (T031 budgeted test); no HTTP transport test (T029+); Windows host only.
 
+### V-20260922-07 — T008 semantic port + T011 cost estimator
+
+- Task(s): T008, T011 (parallel work packages, distinct file ownership).
+- Source revision / working-tree state: Heimdall commit `c7d9634` (on top of `ebe5f1f`); `deepseek-harness/` at `ddefc45`, clean, untouched.
+- Commands and working directory (`C:\Users\User\Desktop\Heimdall`, via `pnpm.cmd`):
+  - `pnpm.cmd test` (workspace) — exit 0; 14 files, 123 tests (11 rubrics, 11 cost-estimator, rest pre-existing).
+  - `pnpm.cmd typecheck` (root), gateway `typecheck` (emit + tests) — exit 0.
+  - `pnpm.cmd lint`, `pnpm.cmd boundaries` (24 source files) — exit 0.
+  - Secret sweep across new domain code — no matches.
+- Artifact paths: `apps/gateway/src/modules/understanding/domain/semantic.ts`; `apps/gateway/src/modules/selection/domain/costs.ts`; `apps/gateway/test/understanding-rubrics.test.ts`; `apps/gateway/test/cost-estimator.test.ts`; access `policy.ts` consolidated onto shared decimal helpers (committed in `38ccceb`, verified this turn by the still-green access suite).
+- Fixes during verification: `moneyOf` body clobbered by a mis-scoped edit — repaired before any commit (no history rewritten; the bad state never left the worktree); sequence-cost test expected unnormalized `'0.10'` — corrected to normalized `'0.1'`, documenting formatter normalization; strict-null/test-type errors fixed without casts.
+- Engineering choices (within accepted design, no product change): 9 versioned rubrics (8 independent batch-A Noul/Choice + 1 parameterized batch-B tool relevance); Score unused in V1 and reserved; entropy measures answer spread, never task success;operative 8k working budget under 32k/64k ceilings with exact integer checks; zero SDK retries by default; cost math in scaled-BigInt nanos with half-up rounding; cached input priced uncached for admission; expected costs blend measured hit/miss legs; sequence expectation weights observed reach probabilities; missing prices yield undefined, never zero; `conservative-v1` estimator sums admission bounds as the fitted model's baseline to beat.
+- Scope preserved: Jev adapter (T025), state projector implementation (T026), calibration/thresholds (T042), task-level fitting (T044), budget ledger mechanics (T012).
+- Limitations / untested paths: no live Jev calls (keyless port spec only); no HTTP transport test (T029+); Windows host only.
+
 Never store keys, temporary browser access tokens, raw customer prompts, or sensitive outputs in this file. Reference a redacted artifact instead.
 
 ## Decision and change ledger
@@ -182,6 +197,32 @@ Verification record IDs: V-20260922-02
 Remaining limitations: no runtime behavior yet; CI file unexecuted remotely; Linux host check deferred to T049
 Decision changes: routine engineering choices only (TS 5.9.3 pin; prettier lint scoped to owned trees) — no product decision changed
 Next READY tasks: T002
+```
+
+```text
+Task ID / title: T008 — Semantic engine port and Jev question specification
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: T002 DONE, T005 DONE
+Files / commit: commit c7d9634 (shared with T011; distinct files: understanding/domain/semantic.ts + understanding-rubrics.test.ts)
+Behavior delivered: SemanticDecisionEngine port types with full distribution preservation; 9 versioned rubrics (inputs/criteria/unknown-path/consumer each, complexity/goal excluded); executable batch-A independence proof; ENGINE_SPEC limits (text-only, 64k/32k/8k budgets, Choice/Score bounds, 10s SDK timeout, zero retries); projector spec with budget ordering; exact fitsClassifierBudget; entropy-as-spread helpers; 11 tests
+Verification record IDs: V-20260922-07
+Remaining limitations: keyless spec only (adapter T025, projector impl T026, calibration T042)
+Decision changes: routine engineering choices only (listed in V-20260922-07) — no product decision changed
+Next READY tasks: T007, T009, T012, T013, T014, T017, T018
+```
+
+```text
+Task ID / title: T011 — Cost components and conservative estimator
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: T003 DONE, T004 DONE, T006 DONE
+Files / commit: commit c7d9634 (shared with T008; distinct files: selection/domain/costs.ts + cost-estimator.test.ts)
+Behavior delivered: upperBoundCallCost (cached-at-uncached-rate admission, separate-reasoning flag, missing-price undefined); expectedCallCost (measured hit-probability blend); expectedSequenceCost (observed reach probabilities, failed spend included); TaskCostEstimator interface + conservative-v1; nanosToDecimalString normalization; 11 hand-calculated tests incl. bound-vs-expected property
+Verification record IDs: V-20260922-07
+Remaining limitations: task-level fitting deferred to T044; ledger mechanics to T012
+Decision changes: routine engineering choices only (listed in V-20260922-07) — no product decision changed
+Next READY tasks: T007, T009, T012, T013, T014, T017, T018
 ```
 
 ```text

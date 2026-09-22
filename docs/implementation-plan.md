@@ -114,7 +114,7 @@ Milestones: M0 contracts/fixtures and DSH feasibility; M1 keyless deterministic 
 **Acceptance/evidence:** A recorded fixture demonstrates prepare -> log -> invoke with the intended model/tools; a changed payload invalidates preparation; unsupported PTC/scoped behavior is a documented gate. If public hooks are insufficient, produce the smallest proposed upstream extension and test, without silently editing core internals. The downstream connector API cannot freeze until this result is reviewed in the design log.
 
 ### T008 — Semantic engine port and Jev question specification
-- [ ] Status: TODO
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `c7d9634`)
 **Depends on:** T002, T005.
 **Owns:** `SemanticDecisionEngine`, rubric registry, state-projector specification.
 **Work:** Specify typed continuity/intent/risk/tool-need/action/output judgments and full probability preservation. Define independent batch A and optional dependent tool batch B. Exclude complexity/goal generation. Version rubric, projector, engine/model and limits; document Jev text-only, dual token bounds, Choice/Score constraints, and per-attempt SDK timeout. Put exact comparisons in code.
@@ -137,7 +137,7 @@ Milestones: M0 contracts/fixtures and DSH feasibility; M1 keyless deterministic 
 **Acceptance/evidence:** Property tests prove tightening a hard requirement cannot add candidates; unknown hard support never passes; essential tool schema tokens and output reserve count toward context; no eligible candidate produces an explicit result.
 
 ### T011 — Cost components and conservative estimator
-- [ ] Status: TODO
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `c7d9634`)
 **Depends on:** T003, T004, T006.
 **Owns:** selection cost math and price-unit normalization.
 **Work:** Implement exact input/cached/output/reasoning/request/modality costs; explicit expected versus upper-bound estimates; switching and lost-cache cost; bounded retry-sequence expectations with stated probability sources. Unknown values remain unknown. Start with invocation estimates and an estimator interface for later task-level fitting.
