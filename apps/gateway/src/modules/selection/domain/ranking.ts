@@ -11,6 +11,7 @@ import {
   makeError,
   parseDecimalToNanos,
   type CandidateId,
+  type ErrorCode,
   type HeimdallError,
   type ModelPin,
   type Money,
@@ -124,7 +125,7 @@ function rejectedOf(
 
 function failureResult(
   inputs: RankInputs,
-  code: 'NO_ELIGIBLE_MODEL' | 'INSUFFICIENT_EVIDENCE',
+  code: ErrorCode,
   message: string,
   compared: RankedCandidate[],
 ): RankingResult {
@@ -168,6 +169,14 @@ export function rankCandidates(inputs: RankInputs): RankingResult {
         orderEligible(inputs, eligible),
         rejected,
         false,
+      );
+    }
+    if (inputs.pin.allowFallback === false) {
+      return failureResult(
+        inputs,
+        'POLICY_DENIED',
+        'strict pin names a candidate outside the eligible set',
+        [],
       );
     }
   }

@@ -15,6 +15,7 @@
     "pg": "8.23.0"
   },
   "devDependencies": {
+    "@heimdall/testkit": "workspace:*",
     "@types/node": "24.11.1",
     "typescript": "5.9.3",
     "vitest": "4.1.8"

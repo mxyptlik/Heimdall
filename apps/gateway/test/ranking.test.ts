@@ -149,6 +149,28 @@ describe('candidate ranking', () => {
     expect(result.primary).toBe(BETA);
   });
 
+  it('fails a strict pin instead of silently switching models', () => {
+    const strict = rankCandidates(
+      base({
+        verdicts: [eligible(ALPHA), rejected(BETA, ['explicitly_denied'])],
+        pin: { candidate: BETA, allowFallback: false },
+      }),
+    );
+    expect(strict.ok).toBe(false);
+    if (strict.ok) return;
+    expect(strict.error.code).toBe('POLICY_DENIED');
+
+    const loose = rankCandidates(
+      base({
+        verdicts: [eligible(ALPHA), rejected(BETA, ['explicitly_denied'])],
+        pin: { candidate: BETA, allowFallback: true },
+      }),
+    );
+    expect(loose.ok).toBe(true);
+    if (!loose.ok) return;
+    expect(loose.primary).toBe(ALPHA);
+  });
+
   it('ranks unpriced certified candidates after priced ones', () => {
     const result = rankCandidates(
       base({

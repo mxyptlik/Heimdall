@@ -36,6 +36,9 @@ importers:
         specifier: 8.23.0
         version: 8.23.0
     devDependencies:
+      '@heimdall/testkit':
+        specifier: workspace:*
+        version: link:../../packages/testkit
       '@types/node':
         specifier: 24.11.1
         version: 24.11.1
