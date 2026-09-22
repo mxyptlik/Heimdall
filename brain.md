@@ -13,11 +13,11 @@ The latest explicit user decision wins over an older recommendation. Do not sile
 
 ## Current checkpoint
 
-- Phase: T016+T017 complete; two-pass orchestration and fake provider committed.
-- Heimdall application code: pure domain through two-pass (T001–T006, T008, T010–T016) + testkit provider harness (T017). No routing composition, persistence, transport, or SDK yet.
-- Mandatory implementation work: T001–T006, T008, T010–T017 DONE; all others TODO. Optional later work: T054 and T055, both TODO and disabled by default.
-- Next READY tasks: T007 needs T002+T005+T006 — READY. T009 needs T002 — READY. T018 needs T008 — READY. T019 needs T016+T017+T018 — blocked on T018. T020 needs T003+T004+T006+T012 — READY (requires a PostgreSQL instance — verify availability first). T024 needs T021+T005+T018 — blocked on T021/T018. Dependency-ready now: T007, T009, T018, T020.
-- Active implementation owner/task: none (T016+T017 closed 2026-09-22).
+- Phase: T018+T009 complete; fake semantic engine and evaluation manifests committed.
+- Heimdall application code: pure domain through two-pass (T001–T006, T008, T010–T018 except T007/T009-docs) + testkit provider/semantic harnesses + eval manifests. No routing composition, persistence, transport, or SDK yet.
+- Mandatory implementation work: T001–T006, T008–T018 DONE; T007, T019+ TODO. Optional later work: T054 and T055, both TODO and disabled by default.
+- Next READY tasks: T007 needs T002+T005+T006 — READY. T019 needs T016+T017+T018 — READY now (all DONE). T020 needs T003+T004+T006+T012 — READY (requires a PostgreSQL instance — verify availability first). T024 needs T021+T005+T018 — blocked on T021. Dependency-ready now: T007, T019, T020.
+- Active implementation owner/task: none (T018+T009 closed 2026-09-22).
 - Existing upstream reference: `deepseek-harness/`, initially pinned to `ddefc45`; verify current HEAD and working tree before connector work.
 - Open setup blockers: none for keyless scaffolding. Paid evaluation, exact candidate choice, release license and credentials are handled by their explicit future tasks.
 - Current web-server uptime is unknown. A successful launch was observed during setup; do not assume it is still running after a restart or new session.
@@ -181,6 +181,23 @@ Limitations / untested paths:
 - Scope preserved: routing service wrapping (T027), TS port interfaces (T030), fake semantic engine (T018), live provider streams (T031).
 - Limitations / untested paths: no HTTP transport test (T029+); Windows host only.
 
+### V-20260922-11 — T018 fake semantic engine + T009 eval manifests
+
+- Task(s): T018, T009 (parallel work packages, distinct areas).
+- Source revision / working-tree state: Heimdall commit `aa26667` (on top of `5703b91`); `deepseek-harness/` at `ddefc45`, clean, untouched.
+- Commands and working directory (`C:\Users\User\Desktop\Heimdall`, via `pnpm.cmd`):
+  - `pnpm.cmd test` (workspace) — exit 0; 21 files, 187 tests (9 fake-semantic, rest pre-existing).
+  - `pnpm.cmd typecheck` (root), testkit `typecheck` — exit 0.
+  - `pnpm.cmd lint` (now covering `data/` + `evaluation/`) — exit 0.
+  - `pnpm.cmd boundaries` (29 source files) — exit 0.
+  - Fixture validation via Ajv draft 2020-12 (contracts-local node): both example fixtures VALID against `task-schema.v1.json`.
+  - Secret sweep across new code and manifests — no matches.
+- Artifact paths: `packages/testkit/src/semantic.ts`; `packages/testkit/test/fake-semantic.test.ts`; `evaluation/manifests/{dataset-candidates,task-schema,splits}.v1.json`; `evaluation/manifests/judge-rubric.draft.md`; `evaluation/fixtures/{chat-explanation,modality-rejection}.json`.
+- Fixes during verification: exact-optional clock field (`FakeClock | undefined` instead of `clock?`); readonly answer distributions (scripted fixtures immutable); typo brace in test.
+- Engineering choices (within accepted design, no product change): testkit-local mirror types with T026 convergence noted (avoids a testkit→gateway-app cycle); unscripted questions fail loudly; malformed scripts surface as invalid_shape (adapter degradation path input); fixture states are plumbing data with no accuracy claim; dataset licenses verified at source (SWE-bench MIT sha 969657c, HumanEval MIT sha 4f14854, Multi-SWE-bench Apache-2.0 via canonical org after ByteDance-Seed 404); per-instance source-repo licenses still required at selection time; splits sealed before any tuning with example fixtures excluded from runs.
+- Scope preserved: live Jev behavior (T025), instance selection and paid runs (T032/T041), final gate values (T045).
+- Limitations / untested paths: no live dataset downloads performed (keyless manifest work); no HTTP transport test (T029+); Windows host only.
+
 ### V-20260922-08 — T013 continuity reducer + T014 tool selection
 
 - Task(s): T013, T014 (parallel work packages, distinct file ownership).
@@ -242,6 +259,32 @@ Verification record IDs: V-20260922-02
 Remaining limitations: no runtime behavior yet; CI file unexecuted remotely; Linux host check deferred to T049
 Decision changes: routine engineering choices only (TS 5.9.3 pin; prettier lint scoped to owned trees) — no product decision changed
 Next READY tasks: T002
+```
+
+```text
+Task ID / title: T018 — Fake semantic engine and malformed-response fixtures
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: T008 DONE (rubric registry + port spec)
+Files / commit: commit aa26667 (shared with T009; distinct files: testkit semantic.ts + fake-semantic.test.ts)
+Behavior delivered: scripted Noul/Choice/Score answers with full distributions; timeouts advancing the fake clock; malformed/unscripted handling; strict answer validation (ids, finiteness, ranges, option allowlist, sum tolerance, size bounds); rubric-version/state-size call capture; adversarial-state fixtures as plumbing data; 9 tests
+Verification record IDs: V-20260922-11
+Remaining limitations: T026 convergence proves the port match; no live Jev behavior
+Decision changes: routine engineering choices only (listed in V-20260922-11) — no product decision changed
+Next READY tasks: T007, T019, T020
+```
+
+```text
+Task ID / title: T009 — Evaluation data and licensing manifest
+Owner: implementation engineer
+Status transition and date: TODO -> IN_PROGRESS -> DONE, 2026-09-22
+Dependencies verified: T002 DONE
+Files / commit: commit aa26667 (shared with T018; distinct files: 3 manifest JSONs + judge rubric draft + 2 example fixtures; lint extended to data/ + evaluation/)
+Behavior delivered: 3 source-verified dataset candidates (SWE-bench MIT, HumanEval MIT, Multi-SWE-bench Apache-2.0) + authored category; task record schema; sealed split registry with example-only fixtures; judge rubric draft (executable-first, blinded, calibrated); both example fixtures validate against the schema
+Verification record IDs: V-20260922-11
+Remaining limitations: per-instance repo licenses at selection time (T032/T041); no downloads performed
+Decision changes: routine engineering choices only (listed in V-20260922-11) — no product decision changed
+Next READY tasks: T007, T019, T020
 ```
 
 ```text

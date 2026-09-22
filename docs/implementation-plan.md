@@ -121,7 +121,7 @@ Milestones: M0 contracts/fixtures and DSH feasibility; M1 keyless deterministic 
 **Acceptance/evidence:** Each question names its input fields, criteria, unknown path and consumer; dependency diagram proves no within-batch answer dependency; fixture maps typed answers without assuming confidence equals task success. References point to the verified TypeSafe docs in system design section 5.
 
 ### T009 — Evaluation data and licensing manifest
-- [ ] Status: TODO
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `aa26667`)
 **Depends on:** T002.
 **Owns:** `evaluation/manifests`, task schema, split registry and judge rubric draft.
 **Work:** Inventory a small reproducible mix of bug fixes, tests, bounded refactors, documentation, explanation, tool-heavy and ambiguous-follow-up cases. Identify source repository commits, task licenses, allowed reuse, sandbox needs, success tests, train/tune/test split and contamination risks. Choose representative chat/RAG and modality rejection fixtures. Name dataset candidates after checking sources; do not assert licenses from memory.
@@ -188,7 +188,7 @@ Milestones: M0 contracts/fixtures and DSH feasibility; M1 keyless deterministic 
 **Acceptance/evidence:** Replay produces exact event order; tests can force failure before and after commitment, unknown billed outcome and fragmented tool arguments. Testkit cannot be accidentally selected as production provider.
 
 ### T018 — Fake semantic engine and malformed-response fixtures
-- [ ] Status: TODO
+- [x] Status: DONE (owner: implementation engineer, 2026-09-22; commit `aa26667`)
 **Depends on:** T008.
 **Owns:** `packages/testkit/semantic`.
 **Work:** Return scripted Noul/Choice/Score results, confidence distributions, timeouts and invalid shapes; capture serialized state/rubric versions. Include prompt injection, long irrelevant context, and non-English fixtures without claiming real classifier accuracy.
