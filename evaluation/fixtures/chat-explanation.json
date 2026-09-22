@@ -1,0 +1,9 @@
+{
+  "id": "chat-explanation",
+  "family": "explanation",
+  "source": { "dataset": "heimdall-authored", "license": "to-be-chosen (T051)" },
+  "prompt": "Explain what this function does in two sentences: function add(a, b) { return a + b; }",
+  "success": { "type": "rubric", "rubricRef": "judge-rubric.draft.md" },
+  "split": "example",
+  "sandbox": { "needs": "none", "network": false }
+}

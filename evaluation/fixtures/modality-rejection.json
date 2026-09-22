@@ -1,0 +1,12 @@
+{
+  "id": "modality-rejection",
+  "family": "modality-rejection",
+  "source": { "dataset": "heimdall-authored", "license": "to-be-chosen (T051)" },
+  "prompt": "Describe the contents of the attached audio recording.",
+  "success": {
+    "type": "executable",
+    "tests": ["gateway rejects unverified audio with an explicit modality error"]
+  },
+  "split": "example",
+  "sandbox": { "needs": "none", "network": false }
+}

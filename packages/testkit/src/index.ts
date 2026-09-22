@@ -6,3 +6,4 @@ export const TESTKIT_CONTRACTS_VERSION = CONTRACTS_VERSION;
 export * from './clock.js';
 export * from './random.js';
 export * from './provider.js';
+export * from './semantic.js';

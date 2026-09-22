@@ -11,8 +11,8 @@
   "scripts": {
     "typecheck": "tsc -b",
     "test": "vitest run",
-    "lint": "prettier --check apps packages sdk integrations scripts README.md vitest.config.ts package.json pnpm-workspace.yaml tsconfig.base.json tsconfig.json .prettierrc .github/workflows/ci.yml",
-    "format": "prettier --write apps packages sdk integrations scripts README.md vitest.config.ts package.json pnpm-workspace.yaml tsconfig.base.json tsconfig.json .prettierrc .github/workflows/ci.yml",
+    "lint": "prettier --check apps packages sdk integrations scripts data evaluation README.md vitest.config.ts package.json pnpm-workspace.yaml tsconfig.base.json tsconfig.json .prettierrc .github/workflows/ci.yml",
+    "format": "prettier --write apps packages sdk integrations scripts data evaluation README.md vitest.config.ts package.json pnpm-workspace.yaml tsconfig.base.json tsconfig.json .prettierrc .github/workflows/ci.yml",
     "boundaries": "node scripts/check-boundaries.mjs",
     "ci": "pnpm install --frozen-lockfile && pnpm boundaries && pnpm typecheck"
   },

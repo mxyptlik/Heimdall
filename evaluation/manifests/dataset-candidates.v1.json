@@ -1,0 +1,52 @@
+{
+  "manifestVersion": "v1",
+  "checkedAt": "2026-09-22",
+  "checkedVia": "GitHub license endpoints (api.github.com), recorded blob SHAs below",
+  "note": "Harness/dataset licenses below permit reuse of the harness and task definitions. Individual SWE-task source repositories carry their own licenses: verify per selected instance at selection time (T032/T041). No private customer data is assumed available anywhere in this manifest.",
+  "candidates": [
+    {
+      "name": "swe-bench",
+      "sourceUrl": "https://github.com/SWE-bench/SWE-bench",
+      "license": "MIT",
+      "licenseEvidence": "api.github.com license endpoint: spdx MIT, LICENSE blob sha 969657c73e7be4c9a796dfac715fb0d57b2acf8a",
+      "permittedUse": "Reuse task definitions and harness for internal routing evaluation with attribution",
+      "families": ["bug-fix", "test-writing"],
+      "sandboxNeeds": "containerized Python repos with network disabled at test time",
+      "contaminationRisk": "High public visibility: instances may appear in model training data. Mitigate with held-out authored tasks and chronological splits.",
+      "status": "approved-pending-instance-selection"
+    },
+    {
+      "name": "human-eval",
+      "sourceUrl": "https://github.com/openai/human-eval",
+      "license": "MIT",
+      "licenseEvidence": "api.github.com license endpoint: spdx MIT, LICENSE blob sha 4f14854c3243516f3de1487a60f14882874d7e3a",
+      "permittedUse": "Reuse function-synthesis tasks for internal routing evaluation with attribution",
+      "families": ["test-writing", "explanation"],
+      "sandboxNeeds": "sandboxed Python execution for pass@k checks",
+      "contaminationRisk": "Very high public visibility: treat as supporting signal only, never the sole quality gate.",
+      "status": "approved-pending-instance-selection"
+    },
+    {
+      "name": "multi-swe-bench",
+      "sourceUrl": "https://github.com/multi-swe-bench/multi-swe-bench",
+      "license": "Apache-2.0",
+      "licenseEvidence": "api.github.com repository endpoint: license spdx Apache-2.0 (ByteDance-Seed path 404s; canonical org is multi-swe-bench)",
+      "permittedUse": "Reuse multilingual issue-resolution tasks for internal routing evaluation with attribution and license preservation",
+      "families": ["bug-fix", "test-writing"],
+      "sandboxNeeds": "per-language containers (Java/TypeScript/JavaScript/Go/Rust/C/C++) with network disabled at test time",
+      "contaminationRisk": "Moderate: newer and less mirrored than SWE-bench; still partition by repository and time.",
+      "status": "approved-pending-instance-selection"
+    },
+    {
+      "name": "heimdall-authored",
+      "sourceUrl": null,
+      "license": "to-be-chosen (project license decision gates distribution, T051)",
+      "licenseEvidence": "not yet authored; no third-party rights involved",
+      "permittedUse": "Held-out coding tasks authored for this project: bug fixes, bounded refactors, tool-heavy and ambiguous follow-ups",
+      "families": ["bug-fix", "test-writing", "refactor", "tool-heavy", "ambiguous-follow-up"],
+      "sandboxNeeds": "fixture workspaces with bounded file tools, no network",
+      "contaminationRisk": "Low by construction: never published before the final held-out run; sealed splits below.",
+      "status": "drafting"
+    }
+  ]
+}

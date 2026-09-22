@@ -1,0 +1,20 @@
+{
+  "registryVersion": "v1",
+  "sealed": true,
+  "sealedAt": "2026-09-22",
+  "sealNote": "Sealed before any tuning or model comparison. Unsealing requires a recorded decision with reason; the test split below is never inspected before the pre-registered final run (T045).",
+  "partitionRule": "Repository-plus-time: no source repository and no commit date may appear in more than one of train/tune/test. Public-benchmark instances default to tune at most; test holds authored tasks plus a minority of benchmark instances selected after the seal date.",
+  "partitions": {
+    "train": {
+      "purpose": "Feature discovery and shortlist exploration only",
+      "contents": "unassigned"
+    },
+    "tune": { "purpose": "Threshold and shortlist calibration", "contents": "unassigned" },
+    "test": { "purpose": "Final held-out comparison only", "contents": "unassigned" },
+    "example": {
+      "purpose": "Documentation fixtures excluded from every run",
+      "contents": ["chat-explanation", "modality-rejection"]
+    }
+  },
+  "contaminationNotes": "Public instances may appear in model training data; weight authored held-out tasks highest. Re-verify per-instance source licenses at selection time: harness licenses do not cover every upstream task repository."
+}
