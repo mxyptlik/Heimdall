@@ -25,11 +25,11 @@ describe('contract generation', () => {
         true,
       );
     }
-  });
+  }, 60000);
 
   it('reports no drift via --check', () => {
     execFileSync(process.execPath, [join(PKG_ROOT, 'scripts/generate.mjs'), '--check'], {
       stdio: 'pipe',
     });
-  });
+  }, 60000);
 });

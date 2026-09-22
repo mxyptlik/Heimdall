@@ -12,12 +12,15 @@
     }
   },
   "scripts": {
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b && tsc --noEmit -p tsconfig.tests.json",
+    "test": "vitest run"
   },
   "dependencies": {
     "@heimdall/contracts": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "5.9.3"
+    "@types/node": "24.11.1",
+    "typescript": "5.9.3",
+    "vitest": "4.1.8"
   }
 }
