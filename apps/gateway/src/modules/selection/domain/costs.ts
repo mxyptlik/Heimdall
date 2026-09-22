@@ -4,7 +4,12 @@
 // reuse without proof never reduces hard-cap reservations. Failed-attempt
 // spend is included by construction. Task-level fitting belongs to T044;
 // this module starts from invocation estimates plus a conservative estimator.
-import { parseDecimalToNanos, type Money, type PriceSchedule } from '@heimdall/contracts';
+import {
+  nanosToDecimalString,
+  parseDecimalToNanos,
+  type Money,
+  type PriceSchedule,
+} from '@heimdall/contracts';
 
 /** Call token inputs with explicit billing treatment. No hidden cache assumptions. */
 export interface CallUsageTokens {
@@ -25,15 +30,6 @@ export interface CallCost {
   readonly reasoningCharge: Money;
   readonly requestCharge: Money;
   readonly total: Money;
-}
-
-/** Format integer nanos as an exact decimal string. */
-export function nanosToDecimalString(nanos: bigint): string {
-  const sign = nanos < 0n ? '-' : '';
-  const abs = nanos < 0n ? -nanos : nanos;
-  const int = abs / 1_000_000_000n;
-  const frac = (abs % 1_000_000_000n).toString().padStart(9, '0').replace(/0+$/, '');
-  return frac === '' ? `${sign}${int}` : `${sign}${int}.${frac}`;
 }
 
 /** Exact charge for tokens at a per-million-unit rate, rounded to the nearest nano. */

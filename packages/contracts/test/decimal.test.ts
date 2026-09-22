@@ -1,6 +1,6 @@
 // Exact decimal parsing and comparison. No binary floats touch billing math.
 import { describe, expect, it } from 'vitest';
-import { compareDecimals, parseDecimalToNanos } from '../src/decimal.js';
+import { compareDecimals, nanosToDecimalString, parseDecimalToNanos } from '../src/decimal.js';
 
 describe('exact decimals', () => {
   it('parses scaled nanos without float error', () => {
@@ -22,5 +22,12 @@ describe('exact decimals', () => {
     expect(compareDecimals('0.05', '0.5')).toBe(-1);
     expect(compareDecimals('1.000000001', '1')).toBe(1);
     expect(compareDecimals('nope', '1')).toBeUndefined();
+  });
+
+  it('formats nanos without float artifacts', () => {
+    expect(nanosToDecimalString(118750000n)).toBe('0.11875');
+    expect(nanosToDecimalString(1500000000000n)).toBe('1500');
+    expect(nanosToDecimalString(-500000000n)).toBe('-0.5');
+    expect(nanosToDecimalString(0n)).toBe('0');
   });
 });

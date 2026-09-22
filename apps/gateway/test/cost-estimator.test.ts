@@ -3,11 +3,11 @@
 // never rank as zero; cache assumptions never shrink reservations.
 import { describe, expect, it } from 'vitest';
 import type { Money, PriceSchedule } from '@heimdall/contracts';
+import { nanosToDecimalString } from '@heimdall/contracts';
 import {
   CONSERVATIVE_ESTIMATOR,
   expectedCallCost,
   expectedSequenceCost,
-  nanosToDecimalString,
   upperBoundCallCost,
   type CallUsageTokens,
 } from '../src/modules/selection/public.js';
