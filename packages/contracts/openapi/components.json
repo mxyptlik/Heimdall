@@ -42,6 +42,93 @@
         "title": "AudioBlock",
         "type": "object"
       },
+      "budgetPolicy": {
+        "additionalProperties": false,
+        "description": "Declared money bounds. Hard caps gate admission; soft targets influence ranking only. Ledger mechanics belong to later tasks.",
+        "properties": {
+          "hardCap": {
+            "$ref": "#/components/schemas/money"
+          },
+          "softTarget": {
+            "$ref": "#/components/schemas/money"
+          }
+        },
+        "required": ["hardCap"],
+        "title": "BudgetPolicy",
+        "type": "object"
+      },
+      "candidateId": {
+        "description": "Opaque model-candidate identifier (provider, model/version, and material configuration).",
+        "maxLength": 100,
+        "pattern": "^cand_[A-Za-z0-9_-]{8,96}$",
+        "title": "CandidateId",
+        "type": "string"
+      },
+      "candidateProfile": {
+        "additionalProperties": false,
+        "description": "Versioned model-candidate record. `fixture` marks unmistakably synthetic development data barred from production.",
+        "properties": {
+          "candidateId": {
+            "$ref": "#/components/schemas/candidateId"
+          },
+          "capacity": {
+            "$ref": "#/components/schemas/safeCapacity"
+          },
+          "endpoints": {
+            "$ref": "#/components/schemas/endpointPolicy"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/evidenceRecord"
+            },
+            "maxItems": 128,
+            "minItems": 1,
+            "type": "array"
+          },
+          "fixture": {
+            "type": "boolean"
+          },
+          "modalities": {
+            "$ref": "#/components/schemas/modalitySupport"
+          },
+          "model": {
+            "$ref": "#/components/schemas/modelRef"
+          },
+          "prices": {
+            "$ref": "#/components/schemas/priceSchedule"
+          },
+          "providerFamily": {
+            "$ref": "#/components/schemas/providerFamily"
+          },
+          "revision": {
+            "$ref": "#/components/schemas/revisionId"
+          },
+          "tools": {
+            "$ref": "#/components/schemas/toolSupport"
+          }
+        },
+        "required": [
+          "candidateId",
+          "revision",
+          "providerFamily",
+          "model",
+          "modalities",
+          "tools",
+          "capacity",
+          "endpoints",
+          "prices",
+          "evidence",
+          "fixture"
+        ],
+        "title": "CandidateProfile",
+        "type": "object"
+      },
+      "capabilityState": {
+        "description": "Hard capability evidence status. Unknown is first-class and never treated as verified support or as false.",
+        "enum": ["unknown", "verified", "unsupported"],
+        "title": "CapabilityState",
+        "type": "string"
+      },
       "contentBlock": {
         "description": "Any single content block across all declared modalities.",
         "oneOf": [
@@ -93,6 +180,90 @@
         "title": "DurationMs",
         "type": "integer"
       },
+      "effectivePolicy": {
+        "additionalProperties": false,
+        "description": "Resolved rule bound to the authenticated tenant with level-version provenance. Immutable once issued.",
+        "properties": {
+          "rule": {
+            "$ref": "#/components/schemas/policyRule"
+          },
+          "tenant": {
+            "$ref": "#/components/schemas/tenantId"
+          },
+          "versions": {
+            "additionalProperties": false,
+            "properties": {
+              "application": {
+                "$ref": "#/components/schemas/policyVersion"
+              },
+              "platform": {
+                "$ref": "#/components/schemas/policyVersion"
+              },
+              "tenant": {
+                "$ref": "#/components/schemas/policyVersion"
+              }
+            },
+            "required": ["platform", "tenant"],
+            "type": "object"
+          }
+        },
+        "required": ["tenant", "rule", "versions"],
+        "title": "EffectivePolicy",
+        "type": "object"
+      },
+      "egressRule": {
+        "additionalProperties": false,
+        "description": "Allowed regions and providers for one traffic class. Completion and classifier egress are modeled independently.",
+        "properties": {
+          "providers": {
+            "items": {
+              "$ref": "#/components/schemas/providerFamily"
+            },
+            "maxItems": 16,
+            "minItems": 1,
+            "type": "array"
+          },
+          "regions": {
+            "items": {
+              "$ref": "#/components/schemas/regionCode"
+            },
+            "maxItems": 64,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": ["regions", "providers"],
+        "title": "EgressRule",
+        "type": "object"
+      },
+      "endpointPolicy": {
+        "additionalProperties": false,
+        "description": "Where and through which providers a candidate may serve. Lists are explicit; emptiness is rejected rather than read as unrestricted.",
+        "properties": {
+          "allowsLocal": {
+            "type": "boolean"
+          },
+          "providers": {
+            "items": {
+              "$ref": "#/components/schemas/providerFamily"
+            },
+            "maxItems": 16,
+            "minItems": 1,
+            "type": "array"
+          },
+          "regions": {
+            "items": {
+              "$ref": "#/components/schemas/regionCode"
+            },
+            "maxItems": 64,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": ["regions", "providers", "allowsLocal"],
+        "title": "EndpointPolicy",
+        "type": "object"
+      },
       "errorCode": {
         "description": "Typed gateway error vocabulary. Unknown codes fail validation by design; consumers handle them by upgrading, not guessing.",
         "enum": [
@@ -116,6 +287,43 @@
         ],
         "title": "ErrorCode",
         "type": "string"
+      },
+      "evidenceKind": {
+        "description": "Provenance class of a profile claim. Fixture evidence is synthetic and barred from production.",
+        "enum": ["declared", "measured", "fixture"],
+        "title": "EvidenceKind",
+        "type": "string"
+      },
+      "evidenceRecord": {
+        "additionalProperties": false,
+        "description": "One sourced claim with observation time, optional expiry and sample size, and uncertainty. No unattributed specialization labels.",
+        "properties": {
+          "expiresAt": {
+            "$ref": "#/components/schemas/timestamp"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/evidenceKind"
+          },
+          "observedAt": {
+            "$ref": "#/components/schemas/timestamp"
+          },
+          "sampleCount": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "source": {
+            "maxLength": 512,
+            "minLength": 1,
+            "type": "string"
+          },
+          "uncertainty": {
+            "$ref": "#/components/schemas/fraction"
+          }
+        },
+        "required": ["kind", "source", "observedAt"],
+        "title": "EvidenceRecord",
+        "type": "object"
       },
       "executionCertainty": {
         "description": "How certain Heimdall is that a billable provider call executed. A lost connection never proves zero cost.",
@@ -159,6 +367,13 @@
         "required": ["type", "source"],
         "title": "FileBlock",
         "type": "object"
+      },
+      "fraction": {
+        "description": "Exact decimal fraction between 0 and 1 inclusive.",
+        "maxLength": 12,
+        "pattern": "^(0(\\.\\d{1,9})?|1(\\.0{1,9})?)$",
+        "title": "Fraction",
+        "type": "string"
       },
       "heimdallError": {
         "additionalProperties": false,
@@ -224,6 +439,21 @@
         "title": "ImageBlock",
         "type": "object"
       },
+      "latencyLimits": {
+        "additionalProperties": false,
+        "description": "Application latency requirements. Numerical SLO values are calibrated before hosted rollout.",
+        "properties": {
+          "maxP99Ms": {
+            "$ref": "#/components/schemas/durationMs"
+          },
+          "maxTimeToFirstTokenMs": {
+            "$ref": "#/components/schemas/durationMs"
+          }
+        },
+        "required": ["maxP99Ms"],
+        "title": "LatencyLimits",
+        "type": "object"
+      },
       "mimeType": {
         "maxLength": 128,
         "pattern": "^[a-z]+/[a-z0-9.+-]+$",
@@ -256,6 +486,70 @@
         "title": "Modality",
         "type": "string"
       },
+      "modalitySupport": {
+        "additionalProperties": false,
+        "description": "Per-modality hard support. Every key is explicit; domain code maps an absent record to unknown, never to false.",
+        "properties": {
+          "audio": {
+            "$ref": "#/components/schemas/capabilityState"
+          },
+          "file": {
+            "$ref": "#/components/schemas/capabilityState"
+          },
+          "image": {
+            "$ref": "#/components/schemas/capabilityState"
+          },
+          "mixed": {
+            "$ref": "#/components/schemas/capabilityState"
+          },
+          "text": {
+            "$ref": "#/components/schemas/capabilityState"
+          },
+          "video": {
+            "$ref": "#/components/schemas/capabilityState"
+          }
+        },
+        "required": ["text", "image", "audio", "video", "file", "mixed"],
+        "title": "ModalitySupport",
+        "type": "object"
+      },
+      "modelPin": {
+        "additionalProperties": false,
+        "description": "Explicit candidate pin. Bypasses selection but never eligibility; fallback permission is unambiguous.",
+        "properties": {
+          "allowFallback": {
+            "type": "boolean"
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/candidateId"
+          }
+        },
+        "required": ["candidate", "allowFallback"],
+        "title": "ModelPin",
+        "type": "object"
+      },
+      "modelRef": {
+        "additionalProperties": false,
+        "description": "Model version or documented alias plus alias-resolution status. An unresolved live alias is recorded as such and limits reproducibility claims.",
+        "properties": {
+          "model": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "resolvedRevision": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "unresolvedAlias": {
+            "type": "boolean"
+          }
+        },
+        "required": ["model", "unresolvedAlias"],
+        "title": "ModelRef",
+        "type": "object"
+      },
       "money": {
         "additionalProperties": false,
         "description": "Exact money value with declared currency.",
@@ -269,6 +563,181 @@
         },
         "required": ["currency", "amount"],
         "title": "Money",
+        "type": "object"
+      },
+      "policyOverride": {
+        "additionalProperties": false,
+        "description": "Partial tenant/application rule. Set fields narrow the platform rule; any widening is an explicit conflict error, never a silent relaxation.",
+        "properties": {
+          "allowlist": {
+            "items": {
+              "$ref": "#/components/schemas/candidateId"
+            },
+            "maxItems": 256,
+            "type": "array"
+          },
+          "budgets": {
+            "$ref": "#/components/schemas/budgetPolicy"
+          },
+          "classifierEgress": {
+            "$ref": "#/components/schemas/egressRule"
+          },
+          "deniedCandidates": {
+            "items": {
+              "$ref": "#/components/schemas/candidateId"
+            },
+            "maxItems": 256,
+            "type": "array"
+          },
+          "egress": {
+            "$ref": "#/components/schemas/egressRule"
+          },
+          "latency": {
+            "$ref": "#/components/schemas/latencyLimits"
+          },
+          "pin": {
+            "$ref": "#/components/schemas/modelPin"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/qualityBaseline"
+          },
+          "reliability": {
+            "$ref": "#/components/schemas/reliabilityFloor"
+          },
+          "riskMinimum": {
+            "$ref": "#/components/schemas/riskTier"
+          }
+        },
+        "title": "PolicyOverride",
+        "type": "object"
+      },
+      "policyRule": {
+        "additionalProperties": false,
+        "description": "Complete effective rule for one scope. An empty allowlist constrains nothing; denials are explicit and union across levels.",
+        "properties": {
+          "allowlist": {
+            "items": {
+              "$ref": "#/components/schemas/candidateId"
+            },
+            "maxItems": 256,
+            "type": "array"
+          },
+          "budgets": {
+            "$ref": "#/components/schemas/budgetPolicy"
+          },
+          "classifierEgress": {
+            "$ref": "#/components/schemas/egressRule"
+          },
+          "deniedCandidates": {
+            "items": {
+              "$ref": "#/components/schemas/candidateId"
+            },
+            "maxItems": 256,
+            "type": "array"
+          },
+          "egress": {
+            "$ref": "#/components/schemas/egressRule"
+          },
+          "latency": {
+            "$ref": "#/components/schemas/latencyLimits"
+          },
+          "pin": {
+            "$ref": "#/components/schemas/modelPin"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/qualityBaseline"
+          },
+          "reliability": {
+            "$ref": "#/components/schemas/reliabilityFloor"
+          },
+          "riskMinimum": {
+            "$ref": "#/components/schemas/riskTier"
+          }
+        },
+        "required": [
+          "allowlist",
+          "quality",
+          "latency",
+          "reliability",
+          "riskMinimum",
+          "egress",
+          "classifierEgress",
+          "budgets"
+        ],
+        "title": "PolicyRule",
+        "type": "object"
+      },
+      "policyVersion": {
+        "description": "Opaque policy-version identifier.",
+        "maxLength": 100,
+        "pattern": "^pol_[A-Za-z0-9_-]{8,96}$",
+        "title": "PolicyVersion",
+        "type": "string"
+      },
+      "priceRate": {
+        "additionalProperties": false,
+        "description": "Exact price per one million units in the stated currency.",
+        "properties": {
+          "currency": {
+            "$ref": "#/components/schemas/currency"
+          },
+          "perMillionUnits": {
+            "$ref": "#/components/schemas/decimalAmount"
+          }
+        },
+        "required": ["currency", "perMillionUnits"],
+        "title": "PriceRate",
+        "type": "object"
+      },
+      "priceSchedule": {
+        "additionalProperties": false,
+        "description": "Effective-dated price record. Cross-rate currency consistency is checked in domain code, not in this schema.",
+        "properties": {
+          "cachedInput": {
+            "$ref": "#/components/schemas/priceRate"
+          },
+          "effectiveAt": {
+            "$ref": "#/components/schemas/timestamp"
+          },
+          "input": {
+            "$ref": "#/components/schemas/priceRate"
+          },
+          "output": {
+            "$ref": "#/components/schemas/priceRate"
+          },
+          "reasoning": {
+            "$ref": "#/components/schemas/priceRate"
+          },
+          "request": {
+            "$ref": "#/components/schemas/priceRate"
+          }
+        },
+        "required": ["effectiveAt", "input", "output"],
+        "title": "PriceSchedule",
+        "type": "object"
+      },
+      "providerFamily": {
+        "description": "Provider family key. Lowercase-hyphenated; vendor-neutral, never a vendor-specific core type.",
+        "maxLength": 64,
+        "pattern": "^[a-z][a-z0-9-]{1,63}$",
+        "title": "ProviderFamily",
+        "type": "string"
+      },
+      "qualityBaseline": {
+        "additionalProperties": false,
+        "description": "Caller/profile-specific reference plus maximum tolerated regression as an exact fraction. Numerical values are calibrated in evaluation.",
+        "properties": {
+          "maxRegression": {
+            "$ref": "#/components/schemas/fraction"
+          },
+          "reference": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": ["reference", "maxRegression"],
+        "title": "QualityBaseline",
         "type": "object"
       },
       "refSource": {
@@ -285,11 +754,66 @@
         "title": "RefSource",
         "type": "object"
       },
+      "regionCode": {
+        "maxLength": 64,
+        "pattern": "^[A-Za-z0-9_-]{1,64}$",
+        "title": "RegionCode",
+        "type": "string"
+      },
+      "reliabilityFloor": {
+        "additionalProperties": false,
+        "properties": {
+          "minSuccessRate": {
+            "$ref": "#/components/schemas/fraction"
+          }
+        },
+        "required": ["minSuccessRate"],
+        "title": "ReliabilityFloor",
+        "type": "object"
+      },
       "requestId": {
         "description": "Opaque gateway request identifier. No task-ID fields exist in V1; taskId/task_id/taskID are rejected as unknown properties.",
         "maxLength": 100,
         "pattern": "^req_[A-Za-z0-9_-]{8,96}$",
         "title": "RequestId",
+        "type": "string"
+      },
+      "revisionId": {
+        "description": "Opaque profile-revision identifier.",
+        "maxLength": 100,
+        "pattern": "^rev_[A-Za-z0-9_-]{8,96}$",
+        "title": "RevisionId",
+        "type": "string"
+      },
+      "riskTier": {
+        "description": "Caller-defined risk tier. Higher tiers require stronger evidence and can require caller-side validation; Heimdall never lowers a declared tier.",
+        "enum": ["low", "standard", "high", "critical"],
+        "title": "RiskTier",
+        "type": "string"
+      },
+      "safeCapacity": {
+        "additionalProperties": false,
+        "description": "Empirically safe token capacity with explicit output reserve, not advertised maxima.",
+        "properties": {
+          "outputReserveTokens": {
+            "$ref": "#/components/schemas/tokenCount"
+          },
+          "safeInputTokens": {
+            "$ref": "#/components/schemas/tokenCount"
+          },
+          "safeOutputTokens": {
+            "$ref": "#/components/schemas/tokenCount"
+          }
+        },
+        "required": ["safeInputTokens", "safeOutputTokens", "outputReserveTokens"],
+        "title": "SafeCapacity",
+        "type": "object"
+      },
+      "tenantId": {
+        "description": "Authenticated tenant identifier. Resolved from authentication context, never from a request body field.",
+        "maxLength": 100,
+        "pattern": "^ten_[A-Za-z0-9_-]{8,96}$",
+        "title": "TenantId",
         "type": "string"
       },
       "textBlock": {
@@ -322,6 +846,21 @@
         "minimum": 0,
         "title": "TokenCount",
         "type": "integer"
+      },
+      "toolSupport": {
+        "additionalProperties": false,
+        "description": "Generic tool-calling and structured-output support. Measured success with specific catalogs is quality evidence, not part of this signal.",
+        "properties": {
+          "genericToolCalling": {
+            "$ref": "#/components/schemas/capabilityState"
+          },
+          "structuredOutput": {
+            "$ref": "#/components/schemas/capabilityState"
+          }
+        },
+        "required": ["genericToolCalling", "structuredOutput"],
+        "title": "ToolSupport",
+        "type": "object"
       },
       "urlSource": {
         "additionalProperties": false,

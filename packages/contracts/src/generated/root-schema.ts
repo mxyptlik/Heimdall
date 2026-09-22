@@ -391,5 +391,566 @@ export const ROOT_SCHEMA: SchemaObject = {
       required: ['code', 'message', 'retryable'],
       additionalProperties: false,
     },
+    capabilityState: {
+      title: 'CapabilityState',
+      description:
+        'Hard capability evidence status. Unknown is first-class and never treated as verified support or as false.',
+      type: 'string',
+      enum: ['unknown', 'verified', 'unsupported'],
+    },
+    evidenceKind: {
+      title: 'EvidenceKind',
+      description:
+        'Provenance class of a profile claim. Fixture evidence is synthetic and barred from production.',
+      type: 'string',
+      enum: ['declared', 'measured', 'fixture'],
+    },
+    candidateId: {
+      title: 'CandidateId',
+      description:
+        'Opaque model-candidate identifier (provider, model/version, and material configuration).',
+      type: 'string',
+      pattern: '^cand_[A-Za-z0-9_-]{8,96}$',
+      maxLength: 100,
+    },
+    revisionId: {
+      title: 'RevisionId',
+      description: 'Opaque profile-revision identifier.',
+      type: 'string',
+      pattern: '^rev_[A-Za-z0-9_-]{8,96}$',
+      maxLength: 100,
+    },
+    providerFamily: {
+      title: 'ProviderFamily',
+      description:
+        'Provider family key. Lowercase-hyphenated; vendor-neutral, never a vendor-specific core type.',
+      type: 'string',
+      pattern: '^[a-z][a-z0-9-]{1,63}$',
+      maxLength: 64,
+    },
+    modelRef: {
+      title: 'ModelRef',
+      description:
+        'Model version or documented alias plus alias-resolution status. An unresolved live alias is recorded as such and limits reproducibility claims.',
+      type: 'object',
+      properties: {
+        model: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 256,
+        },
+        resolvedRevision: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 256,
+        },
+        unresolvedAlias: {
+          type: 'boolean',
+        },
+      },
+      required: ['model', 'unresolvedAlias'],
+      additionalProperties: false,
+    },
+    modalitySupport: {
+      title: 'ModalitySupport',
+      description:
+        'Per-modality hard support. Every key is explicit; domain code maps an absent record to unknown, never to false.',
+      type: 'object',
+      properties: {
+        text: {
+          $ref: '#/$defs/capabilityState',
+        },
+        image: {
+          $ref: '#/$defs/capabilityState',
+        },
+        audio: {
+          $ref: '#/$defs/capabilityState',
+        },
+        video: {
+          $ref: '#/$defs/capabilityState',
+        },
+        file: {
+          $ref: '#/$defs/capabilityState',
+        },
+        mixed: {
+          $ref: '#/$defs/capabilityState',
+        },
+      },
+      required: ['text', 'image', 'audio', 'video', 'file', 'mixed'],
+      additionalProperties: false,
+    },
+    toolSupport: {
+      title: 'ToolSupport',
+      description:
+        'Generic tool-calling and structured-output support. Measured success with specific catalogs is quality evidence, not part of this signal.',
+      type: 'object',
+      properties: {
+        genericToolCalling: {
+          $ref: '#/$defs/capabilityState',
+        },
+        structuredOutput: {
+          $ref: '#/$defs/capabilityState',
+        },
+      },
+      required: ['genericToolCalling', 'structuredOutput'],
+      additionalProperties: false,
+    },
+    safeCapacity: {
+      title: 'SafeCapacity',
+      description:
+        'Empirically safe token capacity with explicit output reserve, not advertised maxima.',
+      type: 'object',
+      properties: {
+        safeInputTokens: {
+          $ref: '#/$defs/tokenCount',
+        },
+        safeOutputTokens: {
+          $ref: '#/$defs/tokenCount',
+        },
+        outputReserveTokens: {
+          $ref: '#/$defs/tokenCount',
+        },
+      },
+      required: ['safeInputTokens', 'safeOutputTokens', 'outputReserveTokens'],
+      additionalProperties: false,
+    },
+    regionCode: {
+      title: 'RegionCode',
+      type: 'string',
+      pattern: '^[A-Za-z0-9_-]{1,64}$',
+      maxLength: 64,
+    },
+    endpointPolicy: {
+      title: 'EndpointPolicy',
+      description:
+        'Where and through which providers a candidate may serve. Lists are explicit; emptiness is rejected rather than read as unrestricted.',
+      type: 'object',
+      properties: {
+        regions: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 64,
+          items: {
+            $ref: '#/$defs/regionCode',
+          },
+        },
+        providers: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 16,
+          items: {
+            $ref: '#/$defs/providerFamily',
+          },
+        },
+        allowsLocal: {
+          type: 'boolean',
+        },
+      },
+      required: ['regions', 'providers', 'allowsLocal'],
+      additionalProperties: false,
+    },
+    priceRate: {
+      title: 'PriceRate',
+      description: 'Exact price per one million units in the stated currency.',
+      type: 'object',
+      properties: {
+        currency: {
+          $ref: '#/$defs/currency',
+        },
+        perMillionUnits: {
+          $ref: '#/$defs/decimalAmount',
+        },
+      },
+      required: ['currency', 'perMillionUnits'],
+      additionalProperties: false,
+    },
+    priceSchedule: {
+      title: 'PriceSchedule',
+      description:
+        'Effective-dated price record. Cross-rate currency consistency is checked in domain code, not in this schema.',
+      type: 'object',
+      properties: {
+        effectiveAt: {
+          $ref: '#/$defs/timestamp',
+        },
+        input: {
+          $ref: '#/$defs/priceRate',
+        },
+        cachedInput: {
+          $ref: '#/$defs/priceRate',
+        },
+        output: {
+          $ref: '#/$defs/priceRate',
+        },
+        reasoning: {
+          $ref: '#/$defs/priceRate',
+        },
+        request: {
+          $ref: '#/$defs/priceRate',
+        },
+      },
+      required: ['effectiveAt', 'input', 'output'],
+      additionalProperties: false,
+    },
+    fraction: {
+      title: 'Fraction',
+      description: 'Exact decimal fraction between 0 and 1 inclusive.',
+      type: 'string',
+      pattern: '^(0(\\.\\d{1,9})?|1(\\.0{1,9})?)$',
+      maxLength: 12,
+    },
+    evidenceRecord: {
+      title: 'EvidenceRecord',
+      description:
+        'One sourced claim with observation time, optional expiry and sample size, and uncertainty. No unattributed specialization labels.',
+      type: 'object',
+      properties: {
+        kind: {
+          $ref: '#/$defs/evidenceKind',
+        },
+        source: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 512,
+        },
+        observedAt: {
+          $ref: '#/$defs/timestamp',
+        },
+        expiresAt: {
+          $ref: '#/$defs/timestamp',
+        },
+        sampleCount: {
+          type: 'integer',
+          minimum: 0,
+          maximum: 9007199254740991,
+        },
+        uncertainty: {
+          $ref: '#/$defs/fraction',
+        },
+      },
+      required: ['kind', 'source', 'observedAt'],
+      additionalProperties: false,
+    },
+    candidateProfile: {
+      title: 'CandidateProfile',
+      description:
+        'Versioned model-candidate record. `fixture` marks unmistakably synthetic development data barred from production.',
+      type: 'object',
+      properties: {
+        candidateId: {
+          $ref: '#/$defs/candidateId',
+        },
+        revision: {
+          $ref: '#/$defs/revisionId',
+        },
+        providerFamily: {
+          $ref: '#/$defs/providerFamily',
+        },
+        model: {
+          $ref: '#/$defs/modelRef',
+        },
+        modalities: {
+          $ref: '#/$defs/modalitySupport',
+        },
+        tools: {
+          $ref: '#/$defs/toolSupport',
+        },
+        capacity: {
+          $ref: '#/$defs/safeCapacity',
+        },
+        endpoints: {
+          $ref: '#/$defs/endpointPolicy',
+        },
+        prices: {
+          $ref: '#/$defs/priceSchedule',
+        },
+        evidence: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 128,
+          items: {
+            $ref: '#/$defs/evidenceRecord',
+          },
+        },
+        fixture: {
+          type: 'boolean',
+        },
+      },
+      required: [
+        'candidateId',
+        'revision',
+        'providerFamily',
+        'model',
+        'modalities',
+        'tools',
+        'capacity',
+        'endpoints',
+        'prices',
+        'evidence',
+        'fixture',
+      ],
+      additionalProperties: false,
+    },
+    tenantId: {
+      title: 'TenantId',
+      description:
+        'Authenticated tenant identifier. Resolved from authentication context, never from a request body field.',
+      type: 'string',
+      pattern: '^ten_[A-Za-z0-9_-]{8,96}$',
+      maxLength: 100,
+    },
+    policyVersion: {
+      title: 'PolicyVersion',
+      description: 'Opaque policy-version identifier.',
+      type: 'string',
+      pattern: '^pol_[A-Za-z0-9_-]{8,96}$',
+      maxLength: 100,
+    },
+    riskTier: {
+      title: 'RiskTier',
+      description:
+        'Caller-defined risk tier. Higher tiers require stronger evidence and can require caller-side validation; Heimdall never lowers a declared tier.',
+      type: 'string',
+      enum: ['low', 'standard', 'high', 'critical'],
+    },
+    egressRule: {
+      title: 'EgressRule',
+      description:
+        'Allowed regions and providers for one traffic class. Completion and classifier egress are modeled independently.',
+      type: 'object',
+      properties: {
+        regions: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 64,
+          items: {
+            $ref: '#/$defs/regionCode',
+          },
+        },
+        providers: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 16,
+          items: {
+            $ref: '#/$defs/providerFamily',
+          },
+        },
+      },
+      required: ['regions', 'providers'],
+      additionalProperties: false,
+    },
+    qualityBaseline: {
+      title: 'QualityBaseline',
+      description:
+        'Caller/profile-specific reference plus maximum tolerated regression as an exact fraction. Numerical values are calibrated in evaluation.',
+      type: 'object',
+      properties: {
+        reference: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 128,
+        },
+        maxRegression: {
+          $ref: '#/$defs/fraction',
+        },
+      },
+      required: ['reference', 'maxRegression'],
+      additionalProperties: false,
+    },
+    latencyLimits: {
+      title: 'LatencyLimits',
+      description:
+        'Application latency requirements. Numerical SLO values are calibrated before hosted rollout.',
+      type: 'object',
+      properties: {
+        maxP99Ms: {
+          $ref: '#/$defs/durationMs',
+        },
+        maxTimeToFirstTokenMs: {
+          $ref: '#/$defs/durationMs',
+        },
+      },
+      required: ['maxP99Ms'],
+      additionalProperties: false,
+    },
+    reliabilityFloor: {
+      title: 'ReliabilityFloor',
+      type: 'object',
+      properties: {
+        minSuccessRate: {
+          $ref: '#/$defs/fraction',
+        },
+      },
+      required: ['minSuccessRate'],
+      additionalProperties: false,
+    },
+    budgetPolicy: {
+      title: 'BudgetPolicy',
+      description:
+        'Declared money bounds. Hard caps gate admission; soft targets influence ranking only. Ledger mechanics belong to later tasks.',
+      type: 'object',
+      properties: {
+        hardCap: {
+          $ref: '#/$defs/money',
+        },
+        softTarget: {
+          $ref: '#/$defs/money',
+        },
+      },
+      required: ['hardCap'],
+      additionalProperties: false,
+    },
+    modelPin: {
+      title: 'ModelPin',
+      description:
+        'Explicit candidate pin. Bypasses selection but never eligibility; fallback permission is unambiguous.',
+      type: 'object',
+      properties: {
+        candidate: {
+          $ref: '#/$defs/candidateId',
+        },
+        allowFallback: {
+          type: 'boolean',
+        },
+      },
+      required: ['candidate', 'allowFallback'],
+      additionalProperties: false,
+    },
+    policyRule: {
+      title: 'PolicyRule',
+      description:
+        'Complete effective rule for one scope. An empty allowlist constrains nothing; denials are explicit and union across levels.',
+      type: 'object',
+      properties: {
+        allowlist: {
+          type: 'array',
+          maxItems: 256,
+          items: {
+            $ref: '#/$defs/candidateId',
+          },
+        },
+        deniedCandidates: {
+          type: 'array',
+          maxItems: 256,
+          items: {
+            $ref: '#/$defs/candidateId',
+          },
+        },
+        pin: {
+          $ref: '#/$defs/modelPin',
+        },
+        quality: {
+          $ref: '#/$defs/qualityBaseline',
+        },
+        latency: {
+          $ref: '#/$defs/latencyLimits',
+        },
+        reliability: {
+          $ref: '#/$defs/reliabilityFloor',
+        },
+        riskMinimum: {
+          $ref: '#/$defs/riskTier',
+        },
+        egress: {
+          $ref: '#/$defs/egressRule',
+        },
+        classifierEgress: {
+          $ref: '#/$defs/egressRule',
+        },
+        budgets: {
+          $ref: '#/$defs/budgetPolicy',
+        },
+      },
+      required: [
+        'allowlist',
+        'quality',
+        'latency',
+        'reliability',
+        'riskMinimum',
+        'egress',
+        'classifierEgress',
+        'budgets',
+      ],
+      additionalProperties: false,
+    },
+    policyOverride: {
+      title: 'PolicyOverride',
+      description:
+        'Partial tenant/application rule. Set fields narrow the platform rule; any widening is an explicit conflict error, never a silent relaxation.',
+      type: 'object',
+      properties: {
+        allowlist: {
+          type: 'array',
+          maxItems: 256,
+          items: {
+            $ref: '#/$defs/candidateId',
+          },
+        },
+        deniedCandidates: {
+          type: 'array',
+          maxItems: 256,
+          items: {
+            $ref: '#/$defs/candidateId',
+          },
+        },
+        pin: {
+          $ref: '#/$defs/modelPin',
+        },
+        quality: {
+          $ref: '#/$defs/qualityBaseline',
+        },
+        latency: {
+          $ref: '#/$defs/latencyLimits',
+        },
+        reliability: {
+          $ref: '#/$defs/reliabilityFloor',
+        },
+        riskMinimum: {
+          $ref: '#/$defs/riskTier',
+        },
+        egress: {
+          $ref: '#/$defs/egressRule',
+        },
+        classifierEgress: {
+          $ref: '#/$defs/egressRule',
+        },
+        budgets: {
+          $ref: '#/$defs/budgetPolicy',
+        },
+      },
+      additionalProperties: false,
+    },
+    effectivePolicy: {
+      title: 'EffectivePolicy',
+      description:
+        'Resolved rule bound to the authenticated tenant with level-version provenance. Immutable once issued.',
+      type: 'object',
+      properties: {
+        tenant: {
+          $ref: '#/$defs/tenantId',
+        },
+        rule: {
+          $ref: '#/$defs/policyRule',
+        },
+        versions: {
+          type: 'object',
+          properties: {
+            platform: {
+              $ref: '#/$defs/policyVersion',
+            },
+            tenant: {
+              $ref: '#/$defs/policyVersion',
+            },
+            application: {
+              $ref: '#/$defs/policyVersion',
+            },
+          },
+          required: ['platform', 'tenant'],
+          additionalProperties: false,
+        },
+      },
+      required: ['tenant', 'rule', 'versions'],
+      additionalProperties: false,
+    },
   },
 };

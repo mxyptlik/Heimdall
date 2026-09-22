@@ -23,6 +23,9 @@ importers:
 
   apps/gateway:
     dependencies:
+      '@heimdall/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       ajv:
         specifier: 8.20.0
         version: 8.20.0
@@ -39,6 +42,9 @@ importers:
       typescript:
         specifier: 5.9.3
         version: 5.9.3
+      vitest:
+        specifier: 4.1.8
+        version: 4.1.8(@types/node@24.11.1)(vite@8.3.0(@types/node@24.11.1))
 
   integrations/deepseek-harness:
     dependencies:

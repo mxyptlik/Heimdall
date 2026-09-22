@@ -121,6 +121,74 @@ export type ContentBlock =
   | VideoBlock
   | FileBlock
   | MixedBlock;
+/**
+ * Hard capability evidence status. Unknown is first-class and never treated as verified support or as false.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "capabilityState".
+ */
+export type CapabilityState = 'unknown' | 'verified' | 'unsupported';
+/**
+ * Provenance class of a profile claim. Fixture evidence is synthetic and barred from production.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "evidenceKind".
+ */
+export type EvidenceKind = 'declared' | 'measured' | 'fixture';
+/**
+ * Opaque model-candidate identifier (provider, model/version, and material configuration).
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "candidateId".
+ */
+export type CandidateId = string;
+/**
+ * Opaque profile-revision identifier.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "revisionId".
+ */
+export type RevisionId = string;
+/**
+ * Provider family key. Lowercase-hyphenated; vendor-neutral, never a vendor-specific core type.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "providerFamily".
+ */
+export type ProviderFamily = string;
+/**
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "regionCode".
+ */
+export type RegionCode = string;
+/**
+ * Exact decimal fraction between 0 and 1 inclusive.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "fraction".
+ */
+export type Fraction = string;
+/**
+ * Authenticated tenant identifier. Resolved from authentication context, never from a request body field.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "tenantId".
+ */
+export type TenantId = string;
+/**
+ * Opaque policy-version identifier.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "policyVersion".
+ */
+export type PolicyVersion = string;
+/**
+ * Caller-defined risk tier. Higher tiers require stronger evidence and can require caller-side validation; Heimdall never lowers a declared tier.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "riskTier".
+ */
+export type RiskTier = 'low' | 'standard' | 'high' | 'critical';
 
 /**
  * Single schema source for Heimdall V1 contract primitives and error vocabulary (T002). Generated TypeScript and OpenAPI components derive from this file; never edit generated output. Request/result composition belongs to later tasks (T005+).
@@ -244,4 +312,554 @@ export interface HeimdallError {
   decisionId?: DecisionId;
   attemptId?: AttemptId;
   extensions?: Extensions;
+}
+/**
+ * Model version or documented alias plus alias-resolution status. An unresolved live alias is recorded as such and limits reproducibility claims.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "modelRef".
+ */
+export interface ModelRef {
+  model: string;
+  resolvedRevision?: string;
+  unresolvedAlias: boolean;
+}
+/**
+ * Per-modality hard support. Every key is explicit; domain code maps an absent record to unknown, never to false.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "modalitySupport".
+ */
+export interface ModalitySupport {
+  text: CapabilityState;
+  image: CapabilityState;
+  audio: CapabilityState;
+  video: CapabilityState;
+  file: CapabilityState;
+  mixed: CapabilityState;
+}
+/**
+ * Generic tool-calling and structured-output support. Measured success with specific catalogs is quality evidence, not part of this signal.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "toolSupport".
+ */
+export interface ToolSupport {
+  genericToolCalling: CapabilityState;
+  structuredOutput: CapabilityState;
+}
+/**
+ * Empirically safe token capacity with explicit output reserve, not advertised maxima.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "safeCapacity".
+ */
+export interface SafeCapacity {
+  safeInputTokens: TokenCount;
+  safeOutputTokens: TokenCount;
+  outputReserveTokens: TokenCount;
+}
+/**
+ * Where and through which providers a candidate may serve. Lists are explicit; emptiness is rejected rather than read as unrestricted.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "endpointPolicy".
+ */
+export interface EndpointPolicy {
+  /**
+   * @minItems 1
+   * @maxItems 64
+   */
+  regions: [RegionCode, ...RegionCode[]];
+  /**
+   * @minItems 1
+   * @maxItems 16
+   */
+  providers:
+    | [ProviderFamily]
+    | [ProviderFamily, ProviderFamily]
+    | [ProviderFamily, ProviderFamily, ProviderFamily]
+    | [ProviderFamily, ProviderFamily, ProviderFamily, ProviderFamily]
+    | [ProviderFamily, ProviderFamily, ProviderFamily, ProviderFamily, ProviderFamily]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ];
+  allowsLocal: boolean;
+}
+/**
+ * Exact price per one million units in the stated currency.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "priceRate".
+ */
+export interface PriceRate {
+  currency: Currency;
+  perMillionUnits: DecimalAmount;
+}
+/**
+ * Effective-dated price record. Cross-rate currency consistency is checked in domain code, not in this schema.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "priceSchedule".
+ */
+export interface PriceSchedule {
+  effectiveAt: Timestamp;
+  input: PriceRate;
+  cachedInput?: PriceRate;
+  output: PriceRate;
+  reasoning?: PriceRate;
+  request?: PriceRate;
+}
+/**
+ * One sourced claim with observation time, optional expiry and sample size, and uncertainty. No unattributed specialization labels.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "evidenceRecord".
+ */
+export interface EvidenceRecord {
+  kind: EvidenceKind;
+  source: string;
+  observedAt: Timestamp;
+  expiresAt?: Timestamp;
+  sampleCount?: number;
+  uncertainty?: Fraction;
+}
+/**
+ * Versioned model-candidate record. `fixture` marks unmistakably synthetic development data barred from production.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "candidateProfile".
+ */
+export interface CandidateProfile {
+  candidateId: CandidateId;
+  revision: RevisionId;
+  providerFamily: ProviderFamily;
+  model: ModelRef;
+  modalities: ModalitySupport;
+  tools: ToolSupport;
+  capacity: SafeCapacity;
+  endpoints: EndpointPolicy;
+  prices: PriceSchedule;
+  /**
+   * @minItems 1
+   * @maxItems 128
+   */
+  evidence: [EvidenceRecord, ...EvidenceRecord[]];
+  fixture: boolean;
+}
+/**
+ * Allowed regions and providers for one traffic class. Completion and classifier egress are modeled independently.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "egressRule".
+ */
+export interface EgressRule {
+  /**
+   * @minItems 1
+   * @maxItems 64
+   */
+  regions: [RegionCode, ...RegionCode[]];
+  /**
+   * @minItems 1
+   * @maxItems 16
+   */
+  providers:
+    | [ProviderFamily]
+    | [ProviderFamily, ProviderFamily]
+    | [ProviderFamily, ProviderFamily, ProviderFamily]
+    | [ProviderFamily, ProviderFamily, ProviderFamily, ProviderFamily]
+    | [ProviderFamily, ProviderFamily, ProviderFamily, ProviderFamily, ProviderFamily]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ]
+    | [
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+        ProviderFamily,
+      ];
+}
+/**
+ * Caller/profile-specific reference plus maximum tolerated regression as an exact fraction. Numerical values are calibrated in evaluation.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "qualityBaseline".
+ */
+export interface QualityBaseline {
+  reference: string;
+  maxRegression: Fraction;
+}
+/**
+ * Application latency requirements. Numerical SLO values are calibrated before hosted rollout.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "latencyLimits".
+ */
+export interface LatencyLimits {
+  maxP99Ms: DurationMs;
+  maxTimeToFirstTokenMs?: DurationMs;
+}
+/**
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "reliabilityFloor".
+ */
+export interface ReliabilityFloor {
+  minSuccessRate: Fraction;
+}
+/**
+ * Declared money bounds. Hard caps gate admission; soft targets influence ranking only. Ledger mechanics belong to later tasks.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "budgetPolicy".
+ */
+export interface BudgetPolicy {
+  hardCap: Money;
+  softTarget?: Money;
+}
+/**
+ * Explicit candidate pin. Bypasses selection but never eligibility; fallback permission is unambiguous.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "modelPin".
+ */
+export interface ModelPin {
+  candidate: CandidateId;
+  allowFallback: boolean;
+}
+/**
+ * Complete effective rule for one scope. An empty allowlist constrains nothing; denials are explicit and union across levels.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "policyRule".
+ */
+export interface PolicyRule {
+  /**
+   * @maxItems 256
+   */
+  allowlist: CandidateId[];
+  /**
+   * @maxItems 256
+   */
+  deniedCandidates?: CandidateId[];
+  pin?: ModelPin;
+  quality: QualityBaseline;
+  latency: LatencyLimits;
+  reliability: ReliabilityFloor;
+  riskMinimum: RiskTier;
+  egress: EgressRule;
+  classifierEgress: EgressRule;
+  budgets: BudgetPolicy;
+}
+/**
+ * Partial tenant/application rule. Set fields narrow the platform rule; any widening is an explicit conflict error, never a silent relaxation.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "policyOverride".
+ */
+export interface PolicyOverride {
+  /**
+   * @maxItems 256
+   */
+  allowlist?: CandidateId[];
+  /**
+   * @maxItems 256
+   */
+  deniedCandidates?: CandidateId[];
+  pin?: ModelPin;
+  quality?: QualityBaseline;
+  latency?: LatencyLimits;
+  reliability?: ReliabilityFloor;
+  riskMinimum?: RiskTier;
+  egress?: EgressRule;
+  classifierEgress?: EgressRule;
+  budgets?: BudgetPolicy;
+}
+/**
+ * Resolved rule bound to the authenticated tenant with level-version provenance. Immutable once issued.
+ *
+ * This interface was referenced by `HeimdallContractsV1`'s JSON-Schema
+ * via the `definition` "effectivePolicy".
+ */
+export interface EffectivePolicy {
+  tenant: TenantId;
+  rule: PolicyRule;
+  versions: {
+    platform: PolicyVersion;
+    tenant: PolicyVersion;
+    application?: PolicyVersion;
+  };
 }

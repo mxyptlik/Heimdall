@@ -1,0 +1,127 @@
+{
+  "note": "SYNTHETIC development fixture. Not measured evidence. Records with fixture:true are barred from production catalog publication (see T003). Families, models, regions, and prices are invented for keyless tests and must never be presented as production evidence.",
+  "records": [
+    {
+      "candidateId": "cand_synthalpha01",
+      "revision": "rev_synthrev0001",
+      "providerFamily": "synthetic-hosted-alpha",
+      "model": {
+        "model": "synth-code-1a",
+        "resolvedRevision": "synth-code-1a-rev-7",
+        "unresolvedAlias": false
+      },
+      "modalities": {
+        "text": "verified",
+        "image": "unknown",
+        "audio": "unsupported",
+        "video": "unsupported",
+        "file": "unknown",
+        "mixed": "unknown"
+      },
+      "tools": { "genericToolCalling": "verified", "structuredOutput": "verified" },
+      "capacity": {
+        "safeInputTokens": 96000,
+        "safeOutputTokens": 16000,
+        "outputReserveTokens": 4000
+      },
+      "endpoints": {
+        "regions": ["synthetic-region-1"],
+        "providers": ["synthetic-hosted-alpha"],
+        "allowsLocal": false
+      },
+      "prices": {
+        "effectiveAt": "2026-09-22T00:00:00Z",
+        "input": { "currency": "USD", "perMillionUnits": "12.50" },
+        "output": { "currency": "USD", "perMillionUnits": "50.00" }
+      },
+      "evidence": [
+        {
+          "kind": "fixture",
+          "source": "synthetic:fixture-v1",
+          "observedAt": "2026-09-22T00:00:00Z"
+        }
+      ],
+      "fixture": true
+    },
+    {
+      "candidateId": "cand_synthbeta002",
+      "revision": "rev_synthrev0002",
+      "providerFamily": "synthetic-hosted-beta",
+      "model": { "model": "synth-code-2b", "unresolvedAlias": true },
+      "modalities": {
+        "text": "verified",
+        "image": "verified",
+        "audio": "unknown",
+        "video": "unknown",
+        "file": "verified",
+        "mixed": "unknown"
+      },
+      "tools": { "genericToolCalling": "unknown", "structuredOutput": "verified" },
+      "capacity": {
+        "safeInputTokens": 48000,
+        "safeOutputTokens": 8000,
+        "outputReserveTokens": 2000
+      },
+      "endpoints": {
+        "regions": ["synthetic-region-1", "synthetic-region-2"],
+        "providers": ["synthetic-hosted-beta"],
+        "allowsLocal": false
+      },
+      "prices": {
+        "effectiveAt": "2026-09-22T00:00:00Z",
+        "input": { "currency": "USD", "perMillionUnits": "3.00" },
+        "output": { "currency": "USD", "perMillionUnits": "12.00" }
+      },
+      "evidence": [
+        {
+          "kind": "fixture",
+          "source": "synthetic:fixture-v1",
+          "observedAt": "2026-09-22T00:00:00Z"
+        }
+      ],
+      "fixture": true
+    },
+    {
+      "candidateId": "cand_synthlocal03",
+      "revision": "rev_synthrev0003",
+      "providerFamily": "synthetic-local",
+      "model": {
+        "model": "synth-code-local-3c",
+        "resolvedRevision": "synth-code-local-3c-q8",
+        "unresolvedAlias": false
+      },
+      "modalities": {
+        "text": "verified",
+        "image": "unsupported",
+        "audio": "unsupported",
+        "video": "unsupported",
+        "file": "unknown",
+        "mixed": "unknown"
+      },
+      "tools": { "genericToolCalling": "verified", "structuredOutput": "unknown" },
+      "capacity": {
+        "safeInputTokens": 32000,
+        "safeOutputTokens": 8000,
+        "outputReserveTokens": 2000
+      },
+      "endpoints": {
+        "regions": ["synthetic-local"],
+        "providers": ["synthetic-local"],
+        "allowsLocal": true
+      },
+      "prices": {
+        "effectiveAt": "2026-09-22T00:00:00Z",
+        "input": { "currency": "USD", "perMillionUnits": "0.00" },
+        "output": { "currency": "USD", "perMillionUnits": "0.00" }
+      },
+      "evidence": [
+        {
+          "kind": "fixture",
+          "source": "synthetic:fixture-v1",
+          "observedAt": "2026-09-22T00:00:00Z"
+        }
+      ],
+      "fixture": true
+    }
+  ]
+}
